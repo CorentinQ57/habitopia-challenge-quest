@@ -143,6 +143,7 @@ export type Database = {
           is_freeze_token: boolean | null
           level: number
           title: string
+          user_id: string | null
         }
         Insert: {
           cost: number
@@ -152,6 +153,7 @@ export type Database = {
           is_freeze_token?: boolean | null
           level?: number
           title: string
+          user_id?: string | null
         }
         Update: {
           cost?: number
@@ -161,6 +163,7 @@ export type Database = {
           is_freeze_token?: boolean | null
           level?: number
           title?: string
+          user_id?: string | null
         }
         Relationships: []
       }

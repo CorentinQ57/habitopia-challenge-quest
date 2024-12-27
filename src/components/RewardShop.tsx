@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { RewardCard } from "./rewards/RewardCard";
+import { AddRewardDialog } from "./rewards/AddRewardDialog";
 
 const getLevelIcon = (level: number) => {
   switch (level) {
@@ -96,9 +97,12 @@ export const RewardShop = () => {
               <ShoppingBag className="w-6 h-6 text-primary" />
               Boutique de Récompenses
             </SheetTitle>
-            <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
-              <Gem className="w-5 h-5 text-primary" />
-              <span className="font-semibold">{totalXP || 0} XP</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
+                <Gem className="w-5 h-5 text-primary" />
+                <span className="font-semibold">{totalXP || 0} XP</span>
+              </div>
+              <AddRewardDialog />
             </div>
           </div>
         </SheetHeader>
