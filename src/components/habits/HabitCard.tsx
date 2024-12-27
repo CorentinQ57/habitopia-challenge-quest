@@ -50,18 +50,19 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
           .insert([{
             tasks_completed_today: tasksCompletedToday,
             last_activity_date: today,
-            current_streak: 0,
-            longest_streak: 0
+            current_streak: tasksCompletedToday === 3 ? 1 : 0,
+            longest_streak: tasksCompletedToday === 3 ? 1 : 0
           }]);
       } else {
         // Mettre à jour l'enregistrement existant
-        // On n'incrémente la série que si :
-        // 1. On atteint exactement 3 tâches aujourd'hui
-        // 2. On ne l'a pas déjà fait aujourd'hui (last_activity_date différent)
-        const shouldIncrementStreak = tasksCompletedToday === 3 && 
-          existingStreak.last_activity_date !== today;
+        const lastActivityDate = existingStreak.last_activity_date;
+        const isNewDay = lastActivityDate !== today;
+        
+        // On incrémente la série uniquement si :
+        // 1. C'est un nouveau jour
+        // 2. On atteint exactement 3 tâches aujourd'hui
+        const shouldIncrementStreak = isNewDay && tasksCompletedToday === 3;
 
-        // Si on a déjà validé 3 tâches aujourd'hui, on ne doit pas incrémenter la streak
         const newCurrentStreak = shouldIncrementStreak 
           ? existingStreak.current_streak + 1 
           : existingStreak.current_streak;
@@ -72,8 +73,8 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
           .from("user_streaks")
           .update({
             tasks_completed_today: tasksCompletedToday,
+            last_activity_date: today,
             ...(shouldIncrementStreak && {
-              last_activity_date: today,
               current_streak: newCurrentStreak,
               longest_streak: newLongestStreak
             })
