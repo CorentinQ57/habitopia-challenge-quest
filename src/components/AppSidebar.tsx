@@ -97,25 +97,17 @@ export function AppSidebar() {
                       to={item.url} 
                       className="flex items-center gap-3 relative p-2"
                     >
-                      <div className={`
-                        relative flex items-center justify-center w-10 h-10 
-                        rounded-xl bg-white/80 backdrop-blur-sm
-                        group-hover:bg-white group-hover:shadow-md
-                        transition-all duration-300
-                        ${location.pathname === item.url ? 'shadow-md bg-white' : ''}
-                      `}>
-                        <item.icon className={`
-                          h-5 w-5 transition-colors duration-300
-                          ${location.pathname === item.url 
-                            ? 'text-stella-royal' 
-                            : 'text-gray-600 group-hover:text-stella-royal'}
-                        `} />
-                      </div>
+                      <item.icon className={`
+                        h-5 w-5 transition-colors duration-300
+                        ${location.pathname === item.url 
+                          ? 'text-white' 
+                          : 'text-gray-600'}
+                      `} />
                       <span className={`
                         font-medium transition-colors duration-300
                         ${location.pathname === item.url 
-                          ? 'text-stella-royal' 
-                          : 'text-gray-600 group-hover:text-stella-royal'}
+                          ? 'text-white bg-gradient-to-r from-stella-royal to-stella-purple px-3 py-1 rounded-md' 
+                          : 'text-gray-600'}
                       `}>
                         {item.title}
                       </span>
