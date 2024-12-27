@@ -19,13 +19,15 @@ export const SkinSelector = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
           skin:skins (
             id,
             title,
-            preview_url
+            preview_url,
+            type
           )
         `)
         .eq("is_active", false);
       
       if (error) throw error;
-      return data;
+      // Filter to only show character skins
+      return data?.filter(userSkin => userSkin.skin.type === 'character') || [];
     },
   });
 
