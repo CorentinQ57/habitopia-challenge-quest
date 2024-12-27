@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { Gem, ShoppingBag, Award, Trophy, Star } from "lucide-react";
+import { Gem, ShoppingBag, Award, Trophy, Star, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
 interface Reward {
@@ -93,61 +94,80 @@ export const RewardShop = () => {
 
   const getLevelColor = (level: number): string => {
     const colors = {
-      1: "bg-yellow-100 text-yellow-700 border-yellow-200",
-      2: "bg-blue-100 text-blue-700 border-blue-200",
-      3: "bg-purple-100 text-purple-700 border-purple-200",
-      4: "bg-amber-100 text-amber-700 border-amber-200",
+      1: "from-yellow-500/20 to-yellow-500/10 border-yellow-500/20",
+      2: "from-blue-500/20 to-blue-500/10 border-blue-500/20",
+      3: "from-purple-500/20 to-purple-500/10 border-purple-500/20",
+      4: "from-amber-500/20 to-amber-500/10 border-amber-500/20",
     };
-    return colors[level as keyof typeof colors] || "bg-gray-100 text-gray-700 border-gray-200";
+    return colors[level as keyof typeof colors] || "from-gray-500/20 to-gray-500/10 border-gray-500/20";
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ShoppingBag className="w-6 h-6 text-primary" />
-          <h2 className="text-2xl font-bold">Boutique de Récompenses</h2>
-        </div>
-        <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
-          <Gem className="w-5 h-5 text-primary" />
-          <span className="font-semibold">{totalXP || 0} XP</span>
-        </div>
-      </div>
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button
+          className="group relative overflow-hidden bg-gradient-to-br from-primary/90 to-primary shadow-lg hover:shadow-primary/50 transition-all duration-300 animate-bounce-scale border-b-4 border-primary-foreground/20 active:border-b-0 active:translate-y-1"
+          size="lg"
+        >
+          <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-colors" />
+          <span className="relative flex items-center gap-2">
+            <ShoppingBag className="w-5 h-5" />
+            Boutique
+            <div className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full text-sm">
+              <Gem className="w-4 h-4" />
+              <span>{totalXP || 0}</span>
+            </div>
+          </span>
+        </Button>
+      </SheetTrigger>
+      
+      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto bg-gradient-to-br from-background/95 to-background/98 backdrop-blur-sm border-l-2 border-primary/20">
+        <SheetHeader className="space-y-4">
+          <div className="flex items-center justify-between">
+            <SheetTitle className="flex items-center gap-3 text-2xl">
+              <ShoppingBag className="w-6 h-6 text-primary" />
+              Boutique de Récompenses
+            </SheetTitle>
+            <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
+              <Gem className="w-5 h-5 text-primary" />
+              <span className="font-semibold">{totalXP || 0} XP</span>
+            </div>
+          </div>
+        </SheetHeader>
 
-      <div className="grid grid-cols-1 gap-4 max-w-2xl mx-auto">
-        {rewards?.map((reward) => (
-          <Card 
-            key={reward.id} 
-            className={`overflow-hidden transition-all duration-300 hover:shadow-lg border-l-4 ${getLevelColor(reward.level)}`}
-          >
-            <CardHeader className="pb-4">
-              <div className="flex justify-between items-center">
+        <div className="mt-8 space-y-4">
+          {rewards?.map((reward) => (
+            <div
+              key={reward.id}
+              className={`relative overflow-hidden rounded-lg border bg-gradient-to-br ${getLevelColor(reward.level)} p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}
+            >
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   {getLevelIcon(reward.level)}
-                  <CardTitle className="text-lg">{reward.title}</CardTitle>
+                  <h3 className="text-lg font-semibold">{reward.title}</h3>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-background/40 px-3 py-1 rounded-full">
                   <Gem className="w-4 h-4 text-primary" />
                   <span className="font-semibold">{reward.cost} XP</span>
                 </div>
               </div>
+              
               {reward.description && (
-                <p className="text-sm text-muted-foreground mt-2">{reward.description}</p>
+                <p className="text-sm text-muted-foreground mb-4">{reward.description}</p>
               )}
-            </CardHeader>
-            <CardContent>
+
               <Button
                 onClick={() => purchaseReward(reward)}
                 disabled={totalXP ? totalXP < reward.cost : true}
                 variant={totalXP && totalXP >= reward.cost ? "default" : "outline"}
-                className="w-full"
+                className="w-full bg-background/50 hover:bg-background/70"
               >
                 {totalXP && totalXP >= reward.cost ? "Débloquer" : "Points insuffisants"}
               </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
+            </div>
+          ))}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
