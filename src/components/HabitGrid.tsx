@@ -94,12 +94,12 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
       {habits?.map((habit) => (
         <Card 
           key={habit.id}
-          className="group hover:shadow-lg transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90"
+          className="group hover:shadow-lg transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col min-h-[200px]"
           style={{
             boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
           }}
         >
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 flex-grow">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <CardTitle className="flex items-center gap-2 text-xl mb-1">
@@ -108,7 +108,7 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
                     <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
                   )}
                 </CardTitle>
-                <p className="text-sm text-muted-foreground line-clamp-2">{habit.description}</p>
+                <p className="text-sm text-muted-foreground">{habit.description}</p>
               </div>
               <button 
                 onClick={() => handleComplete(habit)}
@@ -121,18 +121,16 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
               </button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-col space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className={`px-3 py-1 rounded-full ${getCategoryColor(habit.category)}`}>
-                  {translateCategory(habit.category)}
+          <CardContent className="mt-auto pt-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className={`px-3 py-1 rounded-full ${getCategoryColor(habit.category)}`}>
+                {translateCategory(habit.category)}
+              </span>
+              <div className="flex items-center gap-1.5 text-amber-500">
+                <Star className="w-4 h-4" />
+                <span className="font-medium">
+                  {habit.experience_points} XP
                 </span>
-                <div className="flex items-center gap-1.5 text-amber-500">
-                  <Star className="w-4 h-4" />
-                  <span className="font-medium">
-                    {habit.experience_points} XP
-                  </span>
-                </div>
               </div>
             </div>
           </CardContent>
