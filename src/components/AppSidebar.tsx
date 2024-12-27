@@ -96,9 +96,9 @@ export function AppSidebar() {
                     <Link 
                       to={item.url} 
                       className={`
-                        flex items-center gap-3 relative p-4 w-full
+                        flex items-center gap-3 relative p-4
                         ${location.pathname === item.url 
-                          ? 'bg-gradient-to-r from-[#a8c0ff] to-[#3f2b96]' 
+                          ? '-mx-2 bg-gradient-to-r from-[#a8c0ff] to-[#3f2b96]' 
                           : ''}
                       `}
                     >
