@@ -34,12 +34,20 @@ export const AddRewardDialog = () => {
     e.preventDefault();
 
     try {
+      // Récupérer l'ID de l'utilisateur courant
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Utilisateur non connecté");
+      }
+
       const { error } = await supabase.from("rewards").insert([
         {
           title,
           description,
           cost: parseInt(cost),
           level: parseInt(level),
+          user_id: user.id, // Ajouter l'ID de l'utilisateur
+          is_freeze_token: false, // S'assurer que ce n'est pas un jeton de gel
         },
       ]);
 
