@@ -34,11 +34,15 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
   // Vérifier si l'habitude a déjà été complétée aujourd'hui
   useEffect(() => {
     const checkIfCompleted = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const today = new Date().toISOString().split('T')[0];
       const { data: habitLog } = await supabase
         .from("habit_logs")
         .select("*")
         .eq("habit_id", habit.id)
+        .eq("user_id", user.id)
         .gte("completed_at", `${today}T00:00:00`)
         .lte("completed_at", `${today}T23:59:59`)
         .maybeSingle();
@@ -59,10 +63,14 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
   const handleCancelHabit = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const today = new Date().toISOString().split('T')[0];
       const { data: habitsCompleted } = await supabase
         .from("habit_logs")
         .select("id")
+        .eq("user_id", user.id)
         .gte("completed_at", `${today}T00:00:00`)
         .lte("completed_at", `${today}T23:59:59`);
 
@@ -75,6 +83,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
         .from("habit_logs")
         .delete()
         .eq("habit_id", habit.id)
+        .eq("user_id", user.id)
         .gte("completed_at", `${today}T00:00:00`)
         .lte("completed_at", `${today}T23:59:59`);
 
@@ -105,10 +114,14 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
   const handleComplete = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const today = new Date().toISOString().split('T')[0];
       const { data: habitsCompleted } = await supabase
         .from("habit_logs")
         .select("id")
+        .eq("user_id", user.id)
         .gte("completed_at", `${today}T00:00:00`)
         .lte("completed_at", `${today}T23:59:59`);
 
@@ -120,6 +133,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
         .from("habit_logs")
         .insert([{ 
           habit_id: habit.id,
+          user_id: user.id,
           experience_gained: habit.experience_points,
           notes: `Habitude complétée: ${habit.title}`
         }]);
