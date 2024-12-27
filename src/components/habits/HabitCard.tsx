@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { updateUserStreak } from "@/utils/streakManagement";
+import { CancelHabitDialog } from "./CancelHabitDialog";
 
 interface Habit {
   id: string;
@@ -25,8 +27,8 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCompleted, setIsCompleted] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  // Vérifier si l'habitude a déjà été complétée aujourd'hui
   const { data: habitLog } = useQuery({
     queryKey: ["habitLog", habit.id],
     queryFn: async () => {
@@ -43,14 +45,62 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
     },
   });
 
-  // Mettre à jour l'état local en fonction des données de la base de données
   useEffect(() => {
     setIsCompleted(!!habitLog);
   }, [habitLog]);
 
+  const handleClick = () => {
+    if (isCompleted) {
+      setShowCancelDialog(true);
+    } else {
+      handleComplete();
+    }
+  };
+
+  const handleCancelHabit = async () => {
+    try {
+      if (!habitLog) return;
+
+      const today = new Date().toISOString().split('T')[0];
+      const { data: habitsCompleted } = await supabase
+        .from("habit_logs")
+        .select("id")
+        .gte("completed_at", `${today}T00:00:00`)
+        .lte("completed_at", `${today}T23:59:59`);
+
+      const tasksCompletedToday = (habitsCompleted?.length || 1) - 1;
+
+      await supabase
+        .from("habit_logs")
+        .delete()
+        .eq('id', habitLog.id);
+
+      await updateUserStreak(tasksCompletedToday);
+
+      setIsCompleted(false);
+      setShowCancelDialog(false);
+
+      queryClient.invalidateQueries({ queryKey: ["todayXP"] });
+      queryClient.invalidateQueries({ queryKey: ["totalXP"] });
+      queryClient.invalidateQueries({ queryKey: ["userStreak"] });
+      queryClient.invalidateQueries({ queryKey: ["weeklyStats"] });
+      queryClient.invalidateQueries({ queryKey: ["habitLog", habit.id] });
+
+      toast({
+        title: "Habitude annulée",
+        description: "L'habitude a été annulée pour aujourd'hui.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'annuler l'habitude.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleComplete = async () => {
     try {
-      // 1. Récupérer le nombre d'habitudes complétées aujourd'hui
       const today = new Date().toISOString().split('T')[0];
       const { data: habitsCompleted } = await supabase
         .from("habit_logs")
@@ -60,58 +110,8 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       const tasksCompletedToday = (habitsCompleted?.length || 0) + 1;
 
-      // 2. Récupérer l'enregistrement user_streaks actuel
-      const { data: existingStreak } = await supabase
-        .from("user_streaks")
-        .select("*")
-        .maybeSingle();
+      await updateUserStreak(tasksCompletedToday);
 
-      if (!existingStreak) {
-        await supabase
-          .from("user_streaks")
-          .insert([{
-            tasks_completed_today: tasksCompletedToday,
-            last_activity_date: today,
-            current_streak: tasksCompletedToday >= 3 ? 1 : 0,
-            longest_streak: tasksCompletedToday >= 3 ? 1 : 0
-          }]);
-      } else {
-        const lastActivityDate = existingStreak.last_activity_date;
-        const isNewDay = lastActivityDate !== today;
-        
-        let newCurrentStreak = existingStreak.current_streak;
-        let newLongestStreak = existingStreak.longest_streak;
-
-        if (isNewDay) {
-          if (existingStreak.tasks_completed_today >= 3) {
-            if (tasksCompletedToday >= 3) {
-              newCurrentStreak += 1;
-              newLongestStreak = Math.max(newCurrentStreak, existingStreak.longest_streak);
-            }
-          } else {
-            newCurrentStreak = tasksCompletedToday >= 3 ? 1 : 0;
-          }
-        } else {
-          if (tasksCompletedToday >= 3 && existingStreak.tasks_completed_today < 3) {
-            newCurrentStreak = existingStreak.current_streak + 1;
-            newLongestStreak = Math.max(newCurrentStreak, existingStreak.longest_streak);
-          }
-        }
-
-        const { error: streakError } = await supabase
-          .from("user_streaks")
-          .update({
-            tasks_completed_today: tasksCompletedToday,
-            last_activity_date: today,
-            current_streak: newCurrentStreak,
-            longest_streak: newLongestStreak
-          })
-          .eq('id', existingStreak.id);
-
-        if (streakError) throw streakError;
-      }
-
-      // 3. Enregistrer l'habitude comme complétée et gagner l'XP
       const { error: habitError } = await supabase
         .from("habit_logs")
         .insert([{ 
@@ -124,7 +124,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       setIsCompleted(true);
       
-      // Invalider les queries pour rafraîchir l'XP, les streaks et les statistiques
       queryClient.invalidateQueries({ queryKey: ["todayXP"] });
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
@@ -165,56 +164,64 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
   };
 
   return (
-    <Card 
-      className={`group transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col min-h-[200px]
-        ${isCompleted ? 'bg-habit-success/20' : ''}`}
-      style={{
-        boxShadow: isCompleted 
-          ? "0 8px 32px 0 rgba(167, 243, 208, 0.2)"
-          : "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
-      }}
-    >
-      <CardHeader className="pb-2 flex-grow">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <CardTitle className={`flex items-center gap-2 text-xl mb-1 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
-              {habit.title}
-              {habit.is_popular && (
-                <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
-              )}
-            </CardTitle>
-            <p className={`text-sm ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
-              {habit.description}
-            </p>
+    <>
+      <Card 
+        className={`group transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col min-h-[200px]
+          ${isCompleted ? 'bg-habit-success/20' : ''}`}
+        style={{
+          boxShadow: isCompleted 
+            ? "0 8px 32px 0 rgba(167, 243, 208, 0.2)"
+            : "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+        }}
+      >
+        <CardHeader className="pb-2 flex-grow">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <CardTitle className={`flex items-center gap-2 text-xl mb-1 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+                {habit.title}
+                {habit.is_popular && (
+                  <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
+                )}
+              </CardTitle>
+              <p className={`text-sm ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+                {habit.description}
+              </p>
+            </div>
+            <button 
+              onClick={handleClick}
+              className={`shrink-0 p-2 rounded-full transition-all duration-300
+                ${isCompleted 
+                  ? 'bg-habit-success hover:bg-red-500 hover:text-white' 
+                  : 'bg-white hover:bg-habit-success hover:text-white'}`}
+              style={{
+                boxShadow: isCompleted ? '0 0 15px rgba(167, 243, 208, 0.5)' : 'none',
+              }}
+            >
+              <Check className={`w-5 h-5 ${isCompleted ? 'text-white' : 'text-habit-success'}`} />
+            </button>
           </div>
-          <button 
-            onClick={handleComplete}
-            disabled={isCompleted}
-            className={`shrink-0 p-2 rounded-full transition-all duration-300
-              ${isCompleted 
-                ? 'bg-habit-success cursor-default' 
-                : 'bg-white hover:bg-habit-success hover:text-white'}`}
-            style={{
-              boxShadow: isCompleted ? '0 0 15px rgba(167, 243, 208, 0.5)' : 'none',
-            }}
-          >
-            <Check className={`w-5 h-5 ${isCompleted ? 'text-white' : 'text-habit-success'}`} />
-          </button>
-        </div>
-      </CardHeader>
-      <CardContent className="mt-auto pt-4">
-        <div className="flex items-center justify-between text-sm">
-          <span className={`px-3 py-1 rounded-full ${getCategoryColor(habit.category)}`}>
-            {translateCategory(habit.category)}
-          </span>
-          <div className="flex items-center gap-1.5 text-amber-500">
-            <Star className="w-4 h-4" />
-            <span className="font-medium">
-              {habit.experience_points} XP
+        </CardHeader>
+        <CardContent className="mt-auto pt-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className={`px-3 py-1 rounded-full ${getCategoryColor(habit.category)}`}>
+              {translateCategory(habit.category)}
             </span>
+            <div className="flex items-center gap-1.5 text-amber-500">
+              <Star className="w-4 h-4" />
+              <span className="font-medium">
+                {habit.experience_points} XP
+              </span>
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <CancelHabitDialog
+        isOpen={showCancelDialog}
+        onClose={() => setShowCancelDialog(false)}
+        onConfirm={handleCancelHabit}
+        habitTitle={habit.title}
+      />
+    </>
   );
 };
