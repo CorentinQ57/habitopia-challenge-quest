@@ -160,32 +160,36 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
             : "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
         }}
       >
-        <DeleteHabitButton habitId={habit.id} habitTitle={habit.title} />
+        <div className="absolute top-3 right-3 z-10">
+          <DeleteHabitButton habitId={habit.id} habitTitle={habit.title} />
+        </div>
         
-        <CardHeader className="pb-2">
-          <div className="space-y-2">
+        <CardHeader className="pb-2 flex-none">
+          <div className="space-y-1.5">
             <CardTitle className={`flex items-center gap-2 text-xl ${isCompleted ? 'text-muted-foreground' : ''}`}>
               {habit.title}
               {habit.is_popular && (
                 <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
               )}
             </CardTitle>
-            <p className={`text-sm ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+            <p className={`text-sm line-clamp-2 ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
               {habit.description}
             </p>
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1 flex flex-col justify-between gap-4">
+        <CardContent className="flex-1 flex flex-col justify-between gap-4 pt-0">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <CategoryBadge category={habit.category} />
             <ExperiencePoints points={habit.experience_points} />
           </div>
           
-          <CompleteHabitButton 
-            isCompleted={isCompleted}
-            onClick={handleClick}
-          />
+          <div className="mt-auto">
+            <CompleteHabitButton 
+              isCompleted={isCompleted}
+              onClick={handleClick}
+            />
+          </div>
         </CardContent>
       </Card>
 
