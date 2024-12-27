@@ -86,19 +86,26 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
       {habits?.map((habit) => (
         <Card 
           key={habit.id}
-          className="group hover:shadow-lg transition-all duration-200 animate-fade-in"
+          className="group hover:shadow-lg transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/80 border border-white/20"
+          style={{
+            background: "rgba(255, 255, 255, 0.8)",
+            boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.07)"
+          }}
         >
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-xl">
                 {habit.title}
                 {habit.is_popular && (
-                  <Trophy className="w-4 h-4 text-yellow-500" />
+                  <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
                 )}
               </CardTitle>
               <button 
                 onClick={() => handleComplete(habit)}
-                className="habit-button bg-habit-success/20 text-green-600 hover:bg-habit-success/30 group-hover:scale-110 transition-all"
+                className="habit-button bg-habit-success/20 text-green-600 hover:bg-habit-success/30 group-hover:scale-110 transition-all duration-300"
+                style={{
+                  animation: "glow 2s ease-in-out infinite"
+                }}
               >
                 <Check className="w-4 h-4" />
               </button>
@@ -108,7 +115,7 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
           <CardContent>
             <div className="flex flex-col space-y-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="px-2 py-1 rounded-full bg-habit-info/20 text-blue-600">
+                <span className="px-2 py-1 rounded-full bg-habit-info/20 text-blue-600 backdrop-blur-sm">
                   {translateCategory(habit.category)}
                 </span>
                 <span className="flex items-center gap-1 text-muted-foreground">
@@ -118,7 +125,7 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
               </div>
               <div className="text-sm text-muted-foreground flex items-center justify-between">
                 <span className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-yellow-500" />
+                  <Star className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
                   Points d'expérience:
                 </span>
                 <span className="font-medium text-foreground">
