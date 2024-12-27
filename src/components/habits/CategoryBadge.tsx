@@ -30,28 +30,34 @@ export const CategoryBadge = ({ category }: CategoryBadgeProps) => {
     return translations[category] || category;
   };
 
-  const getCategoryColor = (categoryName: string): string => {
+  const getCategoryColor = (categoryName: string): { text: string, background: string } => {
     const categoryData = categories?.find(c => c.name === categoryName);
     if (categoryData) {
-      return `text-[${categoryData.color}] bg-[${categoryData.color}]/10`;
+      return {
+        text: categoryData.color,
+        background: `${categoryData.color}20` // Ajoute une transparence de 20%
+      };
     }
     
     // Couleurs par défaut si la catégorie n'est pas trouvée
-    const defaultColors: { [key: string]: string } = {
-      "Health": "text-emerald-500 bg-emerald-50",
-      "Wellness": "text-blue-500 bg-blue-50",
-      "Learning": "text-purple-500 bg-purple-50",
-      "Productivity": "text-orange-500 bg-orange-50"
+    const defaultColors: { [key: string]: { text: string, background: string } } = {
+      "Health": { text: "#10B981", background: "#ECFDF5" },
+      "Wellness": { text: "#3B82F6", background: "#EFF6FF" },
+      "Learning": { text: "#8B5CF6", background: "#F5F3FF" },
+      "Productivity": { text: "#F97316", background: "#FFF7ED" }
     };
-    return defaultColors[categoryName] || "text-gray-600 bg-gray-50";
+    return defaultColors[categoryName] || { text: "#6B7280", background: "#F9FAFB" };
   };
+
+  const colors = getCategoryColor(category);
 
   return (
     <span 
-      className={cn(
-        "px-3 py-1.5 rounded-full font-medium text-sm truncate max-w-[150px]",
-        getCategoryColor(category)
-      )}
+      className="px-3 py-1.5 rounded-full font-medium text-sm truncate max-w-[150px]"
+      style={{
+        color: colors.text,
+        backgroundColor: colors.background
+      }}
       title={translateCategory(category)}
     >
       {translateCategory(category)}
