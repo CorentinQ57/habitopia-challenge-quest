@@ -1,19 +1,35 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Flame } from "lucide-react";
 
 export const StreakCard = () => {
+  const queryClient = useQueryClient();
+
   const { data: streak } = useQuery({
     queryKey: ["userStreak"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Try to get existing streak data
+      const { data: existingStreak, error: fetchError } = await supabase
         .from("user_streaks")
         .select("*")
-        .single();
-      
-      if (error) throw error;
-      return data;
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      // If no streak exists, create initial streak record
+      if (!existingStreak) {
+        const { data: newStreak, error: createError } = await supabase
+          .from("user_streaks")
+          .insert([{}])
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        return newStreak;
+      }
+
+      return existingStreak;
     },
   });
 
