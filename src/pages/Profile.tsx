@@ -27,10 +27,21 @@ const Profile = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (_event === 'SIGNED_IN') {
+        toast({
+          title: "Connexion réussie",
+          description: "Vous êtes maintenant connecté.",
+        });
+      } else if (_event === 'SIGNED_OUT') {
+        toast({
+          title: "Déconnexion",
+          description: "Vous avez été déconnecté.",
+        });
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [toast]);
 
   const { refetch: refetchProfile } = useQuery({
     queryKey: ["profile", session?.user?.id],
@@ -93,7 +104,51 @@ const Profile = () => {
           <CardContent>
             <Auth
               supabaseClient={supabase}
-              appearance={{ theme: ThemeSupa }}
+              appearance={{ 
+                theme: ThemeSupa,
+                style: {
+                  button: {
+                    borderRadius: '6px',
+                    height: '40px',
+                  },
+                  input: {
+                    borderRadius: '6px',
+                    height: '40px',
+                  },
+                },
+                variables: {
+                  default: {
+                    colors: {
+                      brand: 'rgb(var(--primary))',
+                      brandAccent: 'rgb(var(--primary))',
+                    },
+                  },
+                },
+              }}
+              localization={{
+                variables: {
+                  sign_in: {
+                    email_label: 'Email',
+                    password_label: 'Mot de passe',
+                    email_input_placeholder: 'Votre email',
+                    password_input_placeholder: 'Votre mot de passe',
+                    button_label: 'Se connecter',
+                    loading_button_label: 'Connexion en cours ...',
+                    social_provider_text: 'Se connecter avec {{provider}}',
+                    link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
+                  },
+                  sign_up: {
+                    email_label: 'Email',
+                    password_label: 'Mot de passe',
+                    email_input_placeholder: 'Votre email',
+                    password_input_placeholder: 'Votre mot de passe (min. 6 caractères)',
+                    button_label: "S'inscrire",
+                    loading_button_label: 'Inscription en cours ...',
+                    social_provider_text: "S'inscrire avec {{provider}}",
+                    link_text: 'Déjà un compte ? Connectez-vous',
+                  },
+                },
+              }}
               theme="light"
               providers={[]}
             />
