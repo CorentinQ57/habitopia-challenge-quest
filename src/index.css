@@ -39,16 +39,16 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-abril tracking-tight;
-    letter-spacing: -0.02em;
+    @apply font-abril;
+    letter-spacing: 0.01em;
   }
 
   h1 {
-    @apply text-4xl font-normal text-stella-black tracking-normal;
+    @apply text-4xl font-normal text-stella-black;
   }
 
   h2 {
-    @apply text-3xl font-normal text-stella-black tracking-normal;
+    @apply text-3xl font-normal text-stella-black;
   }
 
   h3 {
