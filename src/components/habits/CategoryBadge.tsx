@@ -17,10 +17,10 @@ export const CategoryBadge = ({ category }: CategoryBadgeProps) => {
 
   const getCategoryColor = (category: string): string => {
     const colors: { [key: string]: string } = {
-      "Health": "text-emerald-600 bg-emerald-50",
-      "Wellness": "text-blue-600 bg-blue-50",
-      "Learning": "text-purple-600 bg-purple-50",
-      "Productivity": "text-orange-600 bg-orange-50"
+      "Health": "text-stella-royal bg-stella-royal/10",
+      "Wellness": "text-stella-purple bg-stella-purple/10",
+      "Learning": "text-stella-royal bg-stella-royal/10",
+      "Productivity": "text-stella-purple bg-stella-purple/10"
     };
     return colors[category] || "text-gray-600 bg-gray-50";
   };

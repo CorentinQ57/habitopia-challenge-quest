@@ -1,16 +1,14 @@
-import { Trophy } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { updateUserStreak } from "@/utils/streakManagement";
 import { CancelHabitDialog } from "./CancelHabitDialog";
-import { DeleteHabitButton } from "./DeleteHabitButton";
 import { CategoryBadge } from "./CategoryBadge";
-import { CompleteHabitButton } from "./CompleteHabitButton";
 import { ExperiencePoints } from "./ExperiencePoints";
+import { HabitCardHeader } from "./HabitCardHeader";
+import { HabitCardActions } from "./HabitCardActions";
 
 interface Habit {
   id: string;
@@ -33,26 +31,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  const { data: habitLog } = useQuery({
-    queryKey: ["habitLog", habit.id],
-    queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const { data } = await supabase
-        .from("habit_logs")
-        .select("*")
-        .eq("habit_id", habit.id)
-        .gte("completed_at", `${today}T00:00:00`)
-        .lte("completed_at", `${today}T23:59:59`)
-        .maybeSingle();
-      
-      return data;
-    },
-  });
-
-  useEffect(() => {
-    setIsCompleted(!!habitLog);
-  }, [habitLog]);
-
   const handleClick = () => {
     if (isCompleted) {
       setShowCancelDialog(true);
@@ -63,8 +41,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
   const handleCancelHabit = async () => {
     try {
-      if (!habitLog) return;
-
       const today = new Date().toISOString().split('T')[0];
       const { data: habitsCompleted } = await supabase
         .from("habit_logs")
@@ -73,13 +49,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
         .lte("completed_at", `${today}T23:59:59`);
 
       const tasksCompletedToday = (habitsCompleted?.length || 1) - 1;
-
-      const { error } = await supabase
-        .from("habit_logs")
-        .delete()
-        .eq('id', habitLog.id);
-
-      if (error) throw error;
 
       await updateUserStreak(tasksCompletedToday);
 
@@ -91,7 +60,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
       queryClient.invalidateQueries({ queryKey: ["weeklyStats"] });
-      queryClient.invalidateQueries({ queryKey: ["habitLog", habit.id] });
 
       toast({
         title: "Habitude annulée",
@@ -136,7 +104,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
       queryClient.invalidateQueries({ queryKey: ["weeklyStats"] });
-      queryClient.invalidateQueries({ queryKey: ["habitLog", habit.id] });
 
       toast({
         title: "Bravo !",
@@ -155,43 +122,32 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
     <>
       <Card 
         className={`group relative transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col h-[280px]
-          ${isCompleted ? 'bg-habit-success/20 hover:bg-habit-success/30' : 'hover:bg-white'}`}
+          ${isCompleted ? 'bg-habit-success/20 hover:bg-habit-success/30' : 'hover:bg-stella-royal/5'}`}
         style={{
           boxShadow: isCompleted 
             ? "0 8px 32px 0 rgba(167, 243, 208, 0.2)"
-            : "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+            : "0 8px 32px 0 rgba(65, 105, 225, 0.1)",
         }}
       >
-        <div className="absolute top-3 right-3 z-10">
-          <DeleteHabitButton habitId={habit.id} habitTitle={habit.title} />
-        </div>
+        <HabitCardHeader 
+          title={habit.title}
+          description={habit.description}
+          isPopular={habit.is_popular}
+          isCompleted={isCompleted}
+        />
         
-        <CardHeader className="pb-2 flex-none">
-          <div className="space-y-1.5">
-            <CardTitle className={`flex items-center gap-2 text-xl ${isCompleted ? 'text-muted-foreground' : ''}`}>
-              {habit.title}
-              {habit.is_popular && (
-                <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
-              )}
-            </CardTitle>
-            <p className={`text-sm line-clamp-2 ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
-              {habit.description}
-            </p>
-          </div>
-        </CardHeader>
-
         <CardContent className="flex-1 flex flex-col justify-between gap-4 pt-0">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <CategoryBadge category={habit.category} />
             <ExperiencePoints points={habit.experience_points} />
           </div>
           
-          <div className="mt-auto">
-            <CompleteHabitButton 
-              isCompleted={isCompleted}
-              onClick={handleClick}
-            />
-          </div>
+          <HabitCardActions 
+            habitId={habit.id}
+            habitTitle={habit.title}
+            isCompleted={isCompleted}
+            onComplete={handleClick}
+          />
         </CardContent>
       </Card>
 
