@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Gem, ShoppingBag, Award, Trophy, Star, X } from "lucide-react";
+import { Gem, ShoppingBag, Award, Trophy, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -69,12 +69,19 @@ export const RewardShop = () => {
 
       // Si c'est un glaçon, mettre à jour le nombre de glaçons disponibles
       if (reward.is_freeze_token) {
+        const { data: streakData, error: streakError } = await supabase
+          .from("user_streaks")
+          .select("freeze_tokens")
+          .single();
+
+        if (streakError) throw streakError;
+
         const { error: freezeError } = await supabase
           .from("user_streaks")
           .update({ 
-            freeze_tokens: supabase.sql`freeze_tokens + 1` 
+            freeze_tokens: (streakData?.freeze_tokens || 0) + 1
           })
-          .is("id", "not", null);
+          .not("id", "is", null);
 
         if (freezeError) throw freezeError;
       }
