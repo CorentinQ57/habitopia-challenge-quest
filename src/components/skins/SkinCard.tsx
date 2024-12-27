@@ -26,10 +26,14 @@ export const SkinCard = ({ skin, canPurchase }: SkinCardProps) => {
   const { data: isOwned } = useQuery({
     queryKey: ["skinOwnership", skin.id],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
       const { data, error } = await supabase
         .from("user_skins")
         .select("id")
         .eq("skin_id", skin.id)
+        .eq("user_id", user.id)
         .maybeSingle();
       
       if (error) throw error;
@@ -41,10 +45,21 @@ export const SkinCard = ({ skin, canPurchase }: SkinCardProps) => {
     try {
       setIsPurchasing(true);
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté pour acheter un skin.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data: existingPurchase } = await supabase
         .from("user_skins")
         .select("id")
         .eq("skin_id", skin.id)
+        .eq("user_id", user.id)
         .maybeSingle();
 
       if (existingPurchase) {
@@ -60,7 +75,8 @@ export const SkinCard = ({ skin, canPurchase }: SkinCardProps) => {
         .from("user_skins")
         .insert([{ 
           skin_id: skin.id,
-          is_active: false
+          is_active: false,
+          user_id: user.id
         }]);
 
       if (purchaseError) throw purchaseError;
