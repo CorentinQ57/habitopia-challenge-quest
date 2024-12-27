@@ -53,9 +53,13 @@ export const RewardShop = () => {
   const { data: totalXP } = useQuery({
     queryKey: ["totalXP"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+
       const { data, error } = await supabase
         .from("habit_logs")
-        .select("experience_gained");
+        .select("experience_gained")
+        .eq('user_id', user.id);
       
       if (error) throw error;
       return data.reduce((sum, log) => sum + log.experience_gained, 0);

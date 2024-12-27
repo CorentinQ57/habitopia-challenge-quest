@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +15,7 @@ interface Reward {
 export const usePurchaseReward = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   const purchaseReward = async (reward: Reward, totalXP: number) => {
     if (totalXP < reward.cost) {
@@ -26,6 +28,7 @@ export const usePurchaseReward = () => {
     }
 
     try {
+      setIsPurchasing(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
@@ -52,18 +55,11 @@ export const usePurchaseReward = () => {
         .insert([{
           habit_id: null,
           experience_gained: -reward.cost,
-          notes: `Achat de la récompense: ${reward.title}`
+          notes: `Achat de la récompense: ${reward.title}`,
+          user_id: user.id
         }]);
 
-      if (xpError) {
-        console.error("Erreur lors de la déduction des points:", xpError);
-        toast({
-          title: "Erreur",
-          description: "Impossible de déduire les points d'expérience.",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (xpError) throw xpError;
 
       // 3. Ajouter la récompense à l'utilisateur
       const { error: purchaseError } = await supabase
@@ -74,13 +70,14 @@ export const usePurchaseReward = () => {
         }]);
 
       if (purchaseError) {
-        // En cas d'erreur, on essaie de rembourser les points
+        // En cas d'erreur, rembourser les points
         await supabase
           .from("habit_logs")
           .insert([{
             habit_id: null,
             experience_gained: reward.cost,
-            notes: `Remboursement - Échec de l'achat: ${reward.title}`
+            notes: `Remboursement - Échec de l'achat: ${reward.title}`,
+            user_id: user.id
           }]);
 
         throw purchaseError;
@@ -108,7 +105,11 @@ export const usePurchaseReward = () => {
 
       // 5. Invalider les requêtes pour mettre à jour l'interface
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
-      queryClient.invalidateQueries({ queryKey: ["userStreak"] });
+      queryClient.invalidateQueries({ queryKey: ["userRewards"] });
+      queryClient.invalidateQueries({ queryKey: ["rewardOwnership", reward.id] });
+      if (reward.is_freeze_token) {
+        queryClient.invalidateQueries({ queryKey: ["userStreak"] });
+      }
 
       toast({
         title: "Récompense débloquée !",
@@ -121,8 +122,10 @@ export const usePurchaseReward = () => {
         description: "Impossible d'acheter la récompense.",
         variant: "destructive",
       });
+    } finally {
+      setIsPurchasing(false);
     }
   };
 
-  return { purchaseReward };
+  return { purchaseReward, isPurchasing };
 };

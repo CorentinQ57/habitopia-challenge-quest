@@ -19,7 +19,25 @@ interface RewardCardProps {
 }
 
 export const RewardCard = ({ reward, totalXP, getLevelIcon, getLevelColor }: RewardCardProps) => {
-  const { purchaseReward } = usePurchaseReward();
+  const { purchaseReward, isPurchasing } = usePurchaseReward();
+
+  const { data: isOwned } = useQuery({
+    queryKey: ["rewardOwnership", reward.id],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const { data, error } = await supabase
+        .from("user_rewards")
+        .select("id")
+        .eq("reward_id", reward.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return !!data;
+    },
+  });
 
   return (
     <div
@@ -42,11 +60,19 @@ export const RewardCard = ({ reward, totalXP, getLevelIcon, getLevelColor }: Rew
 
       <Button
         onClick={() => purchaseReward(reward, totalXP)}
-        disabled={totalXP < reward.cost}
-        variant={totalXP >= reward.cost ? "default" : "outline"}
+        disabled={totalXP < reward.cost || isPurchasing || isOwned}
+        variant={isOwned ? "secondary" : totalXP >= reward.cost ? "default" : "outline"}
         className="w-full bg-background/50 hover:bg-background/70"
       >
-        {totalXP >= reward.cost ? "Débloquer" : "Points insuffisants"}
+        {isOwned ? (
+          "Déjà possédé"
+        ) : isPurchasing ? (
+          "Achat en cours..."
+        ) : totalXP >= reward.cost ? (
+          "Acheter"
+        ) : (
+          "Points insuffisants"
+        )}
       </Button>
     </div>
   );
