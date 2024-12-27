@@ -29,7 +29,18 @@ export const usePurchaseReward = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // 1. Add reward to user's rewards
+      // 1. Déduire les points d'expérience d'abord
+      const { error: xpError } = await supabase
+        .from("habit_logs")
+        .insert([{
+          habit_id: null,
+          experience_gained: -reward.cost,
+          notes: `Achat de la récompense: ${reward.title}`
+        }]);
+
+      if (xpError) throw xpError;
+
+      // 2. Ajouter la récompense à l'utilisateur
       const { error: purchaseError } = await supabase
         .from("user_rewards")
         .insert([{ 
@@ -39,11 +50,12 @@ export const usePurchaseReward = () => {
 
       if (purchaseError) throw purchaseError;
 
-      // 2. Handle freeze token if applicable
+      // 3. Gérer le jeton de gel si applicable
       if (reward.is_freeze_token) {
         const { data: streakData, error: streakError } = await supabase
           .from("user_streaks")
           .select("freeze_tokens")
+          .eq('user_id', user.id)
           .maybeSingle();
 
         if (streakError) throw streakError;
@@ -58,18 +70,7 @@ export const usePurchaseReward = () => {
         if (freezeError) throw freezeError;
       }
 
-      // 3. Deduct XP
-      const { error: xpError } = await supabase
-        .from("habit_logs")
-        .insert([{
-          habit_id: null,
-          experience_gained: -reward.cost,
-          notes: `Achat de la récompense: ${reward.title}`
-        }]);
-
-      if (xpError) throw xpError;
-
-      // 4. Invalidate relevant queries
+      // 4. Invalider les requêtes pour mettre à jour l'interface
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
 
