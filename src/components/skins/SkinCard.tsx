@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Coins, ShoppingBag } from "lucide-react";
+import { Coins, ShoppingBag, UserRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -114,7 +114,7 @@ export const SkinCard = ({ skin }: SkinCardProps) => {
       >
         {skin.type === 'character' && (
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary-foreground flex items-center justify-center">
-            <User className="w-12 h-12 text-white" />
+            <UserRound className="w-12 h-12 text-white" />
           </div>
         )}
       </div>
