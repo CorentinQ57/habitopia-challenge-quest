@@ -22,10 +22,16 @@ import {
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 interface AddHabitDialogProps {
   variant?: "button" | "card";
+}
+
+interface Category {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
@@ -36,6 +42,20 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
   const [experiencePoints, setExperiencePoints] = useState("10");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("habit_categories")
+        .select("*")
+        .order("is_default", { ascending: false })
+        .order("name");
+      
+      if (error) throw error;
+      return data as Category[];
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,10 +153,17 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
                   <SelectValue placeholder="Sélectionnez une catégorie" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Health">Santé</SelectItem>
-                  <SelectItem value="Wellness">Bien-être</SelectItem>
-                  <SelectItem value="Learning">Apprentissage</SelectItem>
-                  <SelectItem value="Productivity">Productivité</SelectItem>
+                  {categories?.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        {cat.name}
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header";
 import { HabitGrid } from "@/components/HabitGrid";
+import { CategoryManager } from "@/components/habits/CategoryManager";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,7 +24,14 @@ const Habits = () => {
   return (
     <div className="space-y-8">
       <Header />
-      <HabitGrid habits={habits} isLoading={isLoading} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <HabitGrid habits={habits} isLoading={isLoading} />
+        </div>
+        <div>
+          <CategoryManager />
+        </div>
+      </div>
     </div>
   );
 };
