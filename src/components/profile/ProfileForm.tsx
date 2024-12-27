@@ -19,9 +19,9 @@ export const ProfileForm = ({
   loading 
 }: ProfileFormProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium">
+        <label htmlFor="email" className="text-sm font-medium text-muted-foreground">
           Email
         </label>
         <Input
@@ -29,11 +29,12 @@ export const ProfileForm = ({
           type="email"
           value={email}
           disabled
+          className="bg-muted/50"
         />
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="username" className="text-sm font-medium">
+        <label htmlFor="username" className="text-sm font-medium text-muted-foreground">
           Nom d'utilisateur
         </label>
         <Input
@@ -41,16 +42,17 @@ export const ProfileForm = ({
           value={username}
           onChange={(e) => onUsernameChange(e.target.value)}
           placeholder="Entrez votre nom d'utilisateur"
+          className="border-primary/20 focus-visible:ring-primary"
         />
       </div>
 
       <Button
         onClick={onSave}
         disabled={loading}
-        className="w-full"
+        className="w-full bg-primary hover:bg-primary/90"
       >
         {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-        Enregistrer
+        Enregistrer les modifications
       </Button>
     </div>
   );
