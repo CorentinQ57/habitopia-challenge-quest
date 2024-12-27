@@ -32,6 +32,7 @@ export const updateUserStreak = async (tasksCompletedToday: number) => {
   let newLongestStreak = existingStreak.longest_streak;
 
   if (isNewDay) {
+    // Si c'est un nouveau jour, on met à jour la série normalement
     if (existingStreak.tasks_completed_today >= 3) {
       if (tasksCompletedToday >= 3) {
         newCurrentStreak += 1;
@@ -41,9 +42,18 @@ export const updateUserStreak = async (tasksCompletedToday: number) => {
       newCurrentStreak = tasksCompletedToday >= 3 ? 1 : 0;
     }
   } else {
-    if (tasksCompletedToday >= 3 && existingStreak.tasks_completed_today < 3) {
+    // Si c'est le même jour, on vérifie si on n'a pas déjà validé la série
+    const previouslyCompletedToday = existingStreak.tasks_completed_today >= 3;
+    const nowCompleted = tasksCompletedToday >= 3;
+
+    // On incrémente la série uniquement si on passe de non-complété à complété
+    if (!previouslyCompletedToday && nowCompleted) {
       newCurrentStreak = existingStreak.current_streak + 1;
       newLongestStreak = Math.max(newCurrentStreak, existingStreak.longest_streak);
+    }
+    // Si on passe de complété à non-complété, on décrémente la série
+    else if (previouslyCompletedToday && !nowCompleted) {
+      newCurrentStreak = Math.max(0, existingStreak.current_streak - 1);
     }
   }
 
