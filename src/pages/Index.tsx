@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { HabitGrid } from "@/components/HabitGrid";
 import { CharacterCard } from "@/components/CharacterCard";
-import { TodoList } from "@/components/TodoList";
+import { RewardShop } from "@/components/RewardShop";
 
 const Index = () => {
   const { data: habits, isLoading } = useQuery({
@@ -29,7 +29,7 @@ const Index = () => {
           </div>
           <div className="space-y-8">
             <CharacterCard />
-            <TodoList />
+            <RewardShop />
           </div>
         </div>
       </div>

@@ -77,6 +77,59 @@ export type Database = {
         }
         Relationships: []
       }
+      rewards: {
+        Row: {
+          cost: number
+          created_at: string
+          description: string | null
+          id: string
+          level: number
+          title: string
+        }
+        Insert: {
+          cost: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          level?: number
+          title: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          level?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      user_rewards: {
+        Row: {
+          id: string
+          purchased_at: string
+          reward_id: string | null
+        }
+        Insert: {
+          id?: string
+          purchased_at?: string
+          reward_id?: string | null
+        }
+        Update: {
+          id?: string
+          purchased_at?: string
+          reward_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_rewards_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
