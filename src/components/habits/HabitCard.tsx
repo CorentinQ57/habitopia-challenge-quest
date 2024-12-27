@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { updateUserStreak } from "@/utils/streakManagement";
 import { CancelHabitDialog } from "./CancelHabitDialog";
+import { DeleteHabitButton } from "./DeleteHabitButton";
 
 interface Habit {
   id: string;
@@ -166,7 +167,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
   return (
     <>
       <Card 
-        className={`group transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col min-h-[200px]
+        className={`group relative transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col min-h-[200px]
           ${isCompleted ? 'bg-habit-success/20' : ''}`}
         style={{
           boxShadow: isCompleted 
@@ -174,6 +175,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
             : "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
         }}
       >
+        <DeleteHabitButton habitId={habit.id} habitTitle={habit.title} />
         <CardHeader className="pb-2 flex-grow">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
