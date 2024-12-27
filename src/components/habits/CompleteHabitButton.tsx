@@ -11,7 +11,7 @@ export const CompleteHabitButton = ({
   isCompleted,
   onClick,
 }: CompleteHabitButtonProps) => {
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!isCompleted) {
       const button = e.currentTarget;
       const rect = button.getBoundingClientRect();
@@ -27,7 +27,9 @@ export const CompleteHabitButton = ({
         }
       });
     }
-    onClick();
+    
+    // S'assurer que l'événement onClick est toujours appelé
+    await onClick();
   };
 
   return (
