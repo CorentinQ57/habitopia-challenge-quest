@@ -58,11 +58,19 @@ export const usePurchaseReward = () => {
 
       // Si c'est un glaçon, ajouter un jeton de gel
       if (reward.is_freeze_token) {
+        // D'abord, récupérer le nombre actuel de jetons
+        const { data: streakData } = await supabase
+          .from("user_streaks")
+          .select("freeze_tokens")
+          .eq("user_id", user.id)
+          .single();
+
+        const currentTokens = streakData?.freeze_tokens || 0;
+
+        // Ensuite, mettre à jour avec le nouveau nombre
         const { error: freezeError } = await supabase
           .from("user_streaks")
-          .update({ 
-            freeze_tokens: supabase.sql`freeze_tokens + 1` 
-          })
+          .update({ freeze_tokens: currentTokens + 1 })
           .eq("user_id", user.id);
 
         if (freezeError) throw freezeError;
