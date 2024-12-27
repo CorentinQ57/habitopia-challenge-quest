@@ -15,16 +15,16 @@ export const CompleteHabitButton = ({
     if (!isCompleted) {
       const button = e.currentTarget;
       const rect = button.getBoundingClientRect();
-      const buttonCenterX = rect.left + rect.width / 2;
-      const buttonCenterY = rect.top + rect.height / 2;
-      
-      const x = buttonCenterX / window.innerWidth;
-      const y = buttonCenterY / window.innerHeight;
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
       
       confetti({
         particleCount: 100,
         spread: 70,
-        origin: { x, y }
+        origin: { 
+          x: x / window.innerWidth,
+          y: y / window.innerHeight
+        }
       });
     }
     onClick();

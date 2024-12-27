@@ -74,10 +74,12 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       const tasksCompletedToday = (habitsCompleted?.length || 1) - 1;
 
-      await supabase
+      const { error } = await supabase
         .from("habit_logs")
         .delete()
         .eq('id', habitLog.id);
+
+      if (error) throw error;
 
       await updateUserStreak(tasksCompletedToday);
 
