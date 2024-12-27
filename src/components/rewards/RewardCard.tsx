@@ -1,4 +1,6 @@
 import { Gem } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { usePurchaseReward } from "@/hooks/use-purchase-reward";
 
