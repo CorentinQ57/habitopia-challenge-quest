@@ -44,6 +44,7 @@ export type Database = {
           id: string
           notes: string | null
           status: string
+          user_id: string | null
         }
         Insert: {
           completed_at?: string
@@ -52,6 +53,7 @@ export type Database = {
           id?: string
           notes?: string | null
           status?: string
+          user_id?: string | null
         }
         Update: {
           completed_at?: string
@@ -60,6 +62,7 @@ export type Database = {
           id?: string
           notes?: string | null
           status?: string
+          user_id?: string | null
         }
         Relationships: [
           {
