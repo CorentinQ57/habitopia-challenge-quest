@@ -69,22 +69,15 @@ export const RewardCard = ({ reward, totalXP, getLevelIcon, getLevelColor }: Rew
     try {
       console.log("Deleting reward:", reward.id); // Debug log
 
-      // Vérifier que l'utilisateur est connecté
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      // Vérifier que la récompense appartient à l'utilisateur
-      if (reward.user_id !== user.id) {
-        throw new Error("Not authorized to delete this reward");
+      // Vérifier que la récompense n'est pas un jeton de gel
+      if (reward.is_freeze_token) {
+        throw new Error("Cannot delete freeze tokens");
       }
 
       const { error } = await supabase
         .from("rewards")
         .delete()
-        .eq("id", reward.id)
-        .eq("user_id", user.id); // Ajouter cette condition pour s'assurer que l'utilisateur est propriétaire
+        .eq("id", reward.id);
 
       if (error) {
         console.error("Delete error:", error);
@@ -126,7 +119,7 @@ export const RewardCard = ({ reward, totalXP, getLevelIcon, getLevelColor }: Rew
               <Gem className="w-4 h-4 text-primary" />
               <span className="font-semibold">{reward.cost} XP</span>
             </div>
-            {!reward.is_freeze_token && currentUser && reward.user_id === currentUser.id && (
+            {!reward.is_freeze_token && (
               <Button
                 variant="ghost"
                 size="icon"
