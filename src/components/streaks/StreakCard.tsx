@@ -25,6 +25,11 @@ export const StreakCard = () => {
         const { data: newStreak, error: createError } = await supabase
           .from("user_streaks")
           .insert([{
+            current_streak: 0,
+            longest_streak: 0,
+            tasks_completed_today: 0,
+            last_activity_date: new Date().toISOString().split('T')[0],
+            freeze_tokens: 0,
             freeze_used_date: null
           }])
           .select()
