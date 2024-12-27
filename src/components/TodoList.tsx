@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Todo {
   id: number;
@@ -12,6 +13,8 @@ interface Todo {
   icon: any;
   done: boolean;
   experiencePoints: number;
+  description?: string;
+  category: string;
 }
 
 export const TodoList = () => {
@@ -21,29 +24,35 @@ export const TodoList = () => {
     { 
       id: 1,
       title: "Étudier",
+      description: "Réviser les cours de la semaine",
       time: "10:00",
       location: "K-Cafe",
       icon: Coffee,
       done: false,
-      experiencePoints: 10
+      experiencePoints: 10,
+      category: "Learning"
     },
     {
       id: 2,
       title: "Courses",
+      description: "Acheter les provisions de la semaine",
       time: "14:00",
       location: "Hayday Market",
       icon: ShoppingCart,
       done: false,
-      experiencePoints: 15
+      experiencePoints: 15,
+      category: "Productivity"
     },
     {
       id: 3,
       title: "Manger sainement",
+      description: "Préparer un repas équilibré",
       time: "08:30",
       location: "Maison",
       icon: Home,
       done: false,
-      experiencePoints: 20
+      experiencePoints: 20,
+      category: "Health"
     }
   ]);
 
@@ -52,7 +61,6 @@ export const TodoList = () => {
       const todo = todos.find(t => t.id === todoId);
       if (!todo || todo.done) return;
 
-      // Ajouter l'expérience dans la base de données
       const { error } = await supabase
         .from("habit_logs")
         .insert([{ 
@@ -62,16 +70,13 @@ export const TodoList = () => {
 
       if (error) throw error;
 
-      // Mettre à jour l'état local
       setTodos(todos.map(t => 
         t.id === todoId ? { ...t, done: true } : t
       ));
 
-      // Invalider les queries pour rafraîchir l'XP
       queryClient.invalidateQueries({ queryKey: ["todayXP"] });
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
 
-      // Afficher une notification
       toast({
         title: "Bravo !",
         description: `+${todo.experiencePoints} points d'expérience gagnés !`,
@@ -86,53 +91,71 @@ export const TodoList = () => {
     }
   };
 
+  const getCategoryColor = (category: string): string => {
+    const colors: { [key: string]: string } = {
+      "Health": "text-emerald-600 bg-emerald-50",
+      "Wellness": "text-blue-600 bg-blue-50",
+      "Learning": "text-purple-600 bg-purple-50",
+      "Productivity": "text-orange-600 bg-orange-50"
+    };
+    return colors[category] || "text-gray-600 bg-gray-50";
+  };
+
   return (
-    <div className="habit-card animate-fade-in backdrop-blur-sm">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-blue-700">
-          Tâches du jour
-        </h3>
-        <button className="text-sm text-muted-foreground hover:text-blue-500 transition-colors">
-          Voir détails
-        </button>
-      </div>
-      <div className="space-y-4">
-        {todos.map((todo) => (
-          <div 
-            key={todo.id}
-            className={`flex items-center justify-between p-4 rounded-xl transition-all duration-300 backdrop-blur-sm
-              ${todo.done ? 'bg-habit-success/20' : 'bg-muted hover:bg-muted/80'}`}
-            style={{
-              boxShadow: todo.done ? '0 0 15px rgba(167, 243, 208, 0.3)' : 'none'
-            }}
-          >
-            <div className="flex items-center gap-4">
-              <div className={`habit-icon ${todo.done ? 'bg-habit-success' : 'bg-white'}`}>
-                <todo.icon className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className={`font-medium ${todo.done ? 'line-through text-muted-foreground' : ''}`}>
+    <div className="space-y-4">
+      {todos.map((todo) => (
+        <Card 
+          key={todo.id}
+          className={`transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90
+            ${todo.done ? 'bg-habit-success/20' : ''}`}
+          style={{
+            boxShadow: todo.done 
+              ? "0 8px 32px 0 rgba(167, 243, 208, 0.2)"
+              : "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+          }}
+        >
+          <CardHeader className="pb-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <CardTitle className={`flex items-center gap-2 text-xl mb-1 ${todo.done ? 'line-through text-muted-foreground' : ''}`}>
                   {todo.title}
-                </h4>
-                <p className="text-sm text-muted-foreground">
+                </CardTitle>
+                <p className={`text-sm ${todo.done ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+                  {todo.description}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
                   {todo.time} • {todo.location}
                 </p>
               </div>
+              <button
+                onClick={() => handleComplete(todo.id)}
+                disabled={todo.done}
+                className={`shrink-0 p-2 rounded-full transition-all duration-300
+                  ${todo.done 
+                    ? 'bg-habit-success cursor-default' 
+                    : 'bg-white hover:bg-habit-success hover:text-white'}`}
+                style={{
+                  boxShadow: todo.done ? '0 0 15px rgba(167, 243, 208, 0.5)' : 'none',
+                }}
+              >
+                <Check className={`w-5 h-5 ${todo.done ? 'text-white' : 'text-habit-success'}`} />
+              </button>
             </div>
-            <button
-              onClick={() => handleComplete(todo.id)}
-              disabled={todo.done}
-              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300
-                ${todo.done ? 'bg-habit-success border-habit-success cursor-default' : 'border-muted-foreground hover:border-habit-success hover:bg-habit-success/10 cursor-pointer'}`}
-              style={{
-                boxShadow: todo.done ? '0 0 10px rgba(167, 243, 208, 0.5)' : 'none'
-              }}
-            >
-              {todo.done && <Check className="w-4 h-4 text-white" />}
-            </button>
-          </div>
-        ))}
-      </div>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className={`px-3 py-1 rounded-full ${getCategoryColor(todo.category)}`}>
+                {todo.category}
+              </span>
+              <div className="flex items-center gap-1.5 text-amber-500">
+                <span className="font-medium">
+                  {todo.experiencePoints} XP
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

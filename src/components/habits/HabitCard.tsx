@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 interface Habit {
   id: string;
@@ -22,6 +23,7 @@ interface HabitCardProps {
 export const HabitCard = ({ habit }: HabitCardProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const handleComplete = async () => {
     try {
@@ -29,17 +31,22 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
         .from("habit_logs")
         .insert([{ 
           habit_id: habit.id,
-          experience_gained: habit.experience_points
+          experience_gained: habit.experience_points,
+          notes: `Habitude complétée: ${habit.title}`
         }]);
 
       if (error) throw error;
+
+      setIsCompleted(true);
+      
+      // Invalider les queries pour rafraîchir l'XP
+      queryClient.invalidateQueries({ queryKey: ["todayXP"] });
+      queryClient.invalidateQueries({ queryKey: ["totalXP"] });
 
       toast({
         title: "Bravo !",
         description: `+${habit.experience_points} points d'expérience gagnés !`,
       });
-
-      queryClient.invalidateQueries({ queryKey: ["habits"] });
     } catch (error) {
       toast({
         title: "Erreur",
@@ -71,30 +78,39 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
   return (
     <Card 
-      className="group hover:shadow-lg transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col min-h-[200px]"
+      className={`group transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col min-h-[200px]
+        ${isCompleted ? 'bg-habit-success/20' : ''}`}
       style={{
-        boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+        boxShadow: isCompleted 
+          ? "0 8px 32px 0 rgba(167, 243, 208, 0.2)"
+          : "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
       }}
     >
       <CardHeader className="pb-2 flex-grow">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <CardTitle className="flex items-center gap-2 text-xl mb-1">
+            <CardTitle className={`flex items-center gap-2 text-xl mb-1 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
               {habit.title}
               {habit.is_popular && (
                 <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
               )}
             </CardTitle>
-            <p className="text-sm text-muted-foreground">{habit.description}</p>
+            <p className={`text-sm ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+              {habit.description}
+            </p>
           </div>
           <button 
             onClick={handleComplete}
-            className="shrink-0 p-2 rounded-full bg-habit-success hover:bg-green-100 text-green-600 transition-all duration-300 hover:scale-110"
+            disabled={isCompleted}
+            className={`shrink-0 p-2 rounded-full transition-all duration-300
+              ${isCompleted 
+                ? 'bg-habit-success cursor-default' 
+                : 'bg-white hover:bg-habit-success hover:text-white'}`}
             style={{
-              boxShadow: "0 0 15px rgba(167, 243, 208, 0.5)",
+              boxShadow: isCompleted ? '0 0 15px rgba(167, 243, 208, 0.5)' : 'none',
             }}
           >
-            <Check className="w-5 h-5" />
+            <Check className={`w-5 h-5 ${isCompleted ? 'text-white' : 'text-habit-success'}`} />
           </button>
         </div>
       </CardHeader>

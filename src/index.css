@@ -58,41 +58,8 @@
     @apply text-2xl font-semibold;
   }
 
-  .habit-card {
-    @apply bg-white rounded-2xl p-6 shadow-lg transition-all duration-200;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    box-shadow: 
-      0 4px 6px -1px rgba(0, 0, 0, 0.1),
-      0 2px 4px -1px rgba(0, 0, 0, 0.06),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .habit-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-      0 10px 15px -3px rgba(0, 0, 0, 0.1),
-      0 4px 6px -2px rgba(0, 0, 0, 0.05),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-  }
-
-  .habit-button {
-    @apply px-4 py-2 rounded-full transition-all duration-200;
-    background: linear-gradient(135deg, #A0DFFF, #467FF7);
-    box-shadow: 0 0 15px rgba(160, 223, 255, 0.5);
-  }
-
-  .habit-button:hover {
-    @apply scale-105;
-    box-shadow: 0 0 20px rgba(160, 223, 255, 0.7);
-  }
-
-  .habit-icon {
-    @apply w-10 h-10 rounded-full flex items-center justify-center;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+  .habit-success {
+    @apply bg-emerald-500;
   }
 
   @keyframes gradient {
