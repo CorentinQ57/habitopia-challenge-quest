@@ -56,16 +56,24 @@ export const CharacterCard = () => {
     },
   });
 
-  const getCharacterImage = (skinTitle: string | undefined) => {
+  const getCharacterImage = async (skinTitle: string | undefined) => {
     if (!skinTitle) return null;
     
     const images: { [key: string]: string } = {
-      'Guerrier': '/warrior.jpg',
-      'Mage': '/magus.jpg',
-      'Ninja': '/ninja.jpg'
+      'Guerrier': 'warrior.jpg',
+      'Mage': 'magus.jpg',
+      'Ninja': 'ninja.jpg'
     };
     
-    return images[skinTitle] || null;
+    const filename = images[skinTitle];
+    if (!filename) return null;
+
+    const { data: { publicUrl } } = supabase
+      .storage
+      .from('skins')
+      .getPublicUrl(filename);
+    
+    return publicUrl;
   };
 
   const calculateLevel = (xp: number) => {
@@ -78,7 +86,13 @@ export const CharacterCard = () => {
 
   const level = calculateLevel(totalXP || 0);
   const progress = calculateProgress(totalXP || 0);
-  const characterImage = getCharacterImage(activeSkin?.skin?.title);
+
+  // Use a separate query for the character image
+  const { data: characterImage } = useQuery({
+    queryKey: ["characterImage", activeSkin?.skin?.title],
+    queryFn: () => getCharacterImage(activeSkin?.skin?.title),
+    enabled: !!activeSkin?.skin?.title,
+  });
 
   return (
     <>
