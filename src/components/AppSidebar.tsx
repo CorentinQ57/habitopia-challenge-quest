@@ -141,9 +141,6 @@ export function AppSidebar() {
               <p className="text-sm font-medium text-gray-700 truncate">
                 {profile?.username || "Utilisateur"}
               </p>
-              <p className="text-xs text-gray-500 truncate">
-                {profile?.email}
-              </p>
             </div>
             <Button
               variant="ghost"
