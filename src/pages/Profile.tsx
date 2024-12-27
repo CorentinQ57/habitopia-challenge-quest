@@ -25,7 +25,7 @@ const Profile = () => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (_event === 'SIGNED_IN') {
         toast({
@@ -36,6 +36,16 @@ const Profile = () => {
         toast({
           title: "Déconnexion",
           description: "Vous avez été déconnecté.",
+        });
+      } else if (_event === 'USER_UPDATED') {
+        toast({
+          title: "Profil mis à jour",
+          description: "Vos informations ont été mises à jour.",
+        });
+      } else if (_event === 'PASSWORD_RECOVERY') {
+        toast({
+          title: "Réinitialisation du mot de passe",
+          description: "Veuillez vérifier votre boîte mail.",
         });
       }
     });
@@ -52,7 +62,15 @@ const Profile = () => {
         .eq("id", session?.user?.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger votre profil.",
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
       setUsername(data.username || "");
       setAvatarUrl(data.avatar_url || "");
       return data;
@@ -84,14 +102,24 @@ const Profile = () => {
         description: "Impossible de mettre à jour le profil.",
         variant: "destructive",
       });
+      console.error("Erreur lors de la mise à jour du profil:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de vous déconnecter.",
+        variant: "destructive",
+      });
+      console.error("Erreur lors de la déconnexion:", error);
+    } else {
+      navigate("/");
+    }
   };
 
   if (!session) {
@@ -115,12 +143,22 @@ const Profile = () => {
                     borderRadius: '6px',
                     height: '40px',
                   },
+                  message: {
+                    borderRadius: '6px',
+                    padding: '12px',
+                    marginBottom: '12px',
+                    backgroundColor: 'rgb(var(--destructive) / 0.1)',
+                    color: 'rgb(var(--destructive))',
+                    border: '1px solid rgb(var(--destructive) / 0.2)',
+                  },
                 },
                 variables: {
                   default: {
                     colors: {
                       brand: 'rgb(var(--primary))',
                       brandAccent: 'rgb(var(--primary))',
+                      messageText: 'rgb(var(--destructive))',
+                      messageBackground: 'rgb(var(--destructive) / 0.1)',
                     },
                   },
                 },
@@ -136,6 +174,9 @@ const Profile = () => {
                     loading_button_label: 'Connexion en cours ...',
                     social_provider_text: 'Se connecter avec {{provider}}',
                     link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
+                    email_input_error: 'Email invalide',
+                    password_input_error: 'Mot de passe invalide',
+                    invalid_credentials_error: 'Email ou mot de passe incorrect',
                   },
                   sign_up: {
                     email_label: 'Email',
@@ -146,6 +187,9 @@ const Profile = () => {
                     loading_button_label: 'Inscription en cours ...',
                     social_provider_text: "S'inscrire avec {{provider}}",
                     link_text: 'Déjà un compte ? Connectez-vous',
+                    confirmation_text: 'Vérifiez votre boîte mail pour confirmer votre inscription',
+                    password_input_error: 'Le mot de passe doit contenir au moins 6 caractères',
+                    email_input_error: 'Email invalide',
                   },
                 },
               }}
