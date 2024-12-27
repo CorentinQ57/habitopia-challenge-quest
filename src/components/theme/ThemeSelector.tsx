@@ -10,19 +10,27 @@ export const ThemeSelector = () => {
   const queryClient = useQueryClient();
 
   const { data: userSkins } = useQuery({
-    queryKey: ["userSkins"],
+    queryKey: ["activeTheme"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_skins")
         .select(`
-          *,
-          skin:skins(*)
+          id,
+          is_active,
+          skin_id,
+          skin:skins (
+            id,
+            title,
+            type,
+            theme_colors
+          )
         `)
         .eq("is_active", true)
-        .eq("skin.type", "theme");
+        .eq("skin.type", "theme")
+        .single();
       
-      if (error) throw error;
-      return data?.filter(item => item.skin) || [];
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
     },
   });
 
@@ -32,8 +40,14 @@ export const ThemeSelector = () => {
       const { data, error } = await supabase
         .from("user_skins")
         .select(`
-          *,
-          skin:skins(*)
+          id,
+          skin_id,
+          skin:skins (
+            id,
+            title,
+            type,
+            theme_colors
+          )
         `)
         .eq("skin.type", "theme");
       
@@ -61,7 +75,7 @@ export const ThemeSelector = () => {
       if (activateError) throw activateError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["userSkins"] });
+      queryClient.invalidateQueries({ queryKey: ["activeTheme"] });
       toast({
         title: "Thème appliqué",
         description: "Le thème a été changé avec succès.",
@@ -76,8 +90,7 @@ export const ThemeSelector = () => {
     },
   });
 
-  // Find the active theme
-  const activeTheme = userSkins?.find(item => item.skin?.type === "theme")?.skin_id;
+  const activeTheme = userSkins?.skin_id;
 
   const defaultTheme = {
     id: "default",
@@ -93,7 +106,6 @@ export const ThemeSelector = () => {
     updateThemeMutation.mutate(value);
   };
 
-  // Filter out any items where skin is undefined
   const availableThemes = [
     defaultTheme,
     ...(purchasedThemes?.map(({ skin }) => skin).filter(Boolean) || []),
