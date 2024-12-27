@@ -54,7 +54,7 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
       {sortedHabits?.map((habit) => (
         <div
           key={habit.id}
-          className="transition-all duration-700 ease-in-out transform"
+          className="transition-all duration-700 ease-in-out transform h-full"
         >
           <HabitCard habit={habit} />
         </div>

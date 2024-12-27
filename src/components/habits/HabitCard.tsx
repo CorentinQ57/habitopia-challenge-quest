@@ -84,6 +84,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
       setIsCompleted(false);
       setShowCancelDialog(false);
 
+      queryClient.invalidateQueries({ queryKey: ["habitLogs"] });
       queryClient.invalidateQueries({ queryKey: ["todayXP"] });
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
@@ -128,6 +129,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       setIsCompleted(true);
       
+      queryClient.invalidateQueries({ queryKey: ["habitLogs"] });
       queryClient.invalidateQueries({ queryKey: ["todayXP"] });
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
@@ -148,51 +150,49 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
   };
 
   return (
-    <>
-      <Card 
-        className={`group relative transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col min-h-[220px]
-          ${isCompleted ? 'bg-habit-success/20 hover:bg-habit-success/30' : 'hover:bg-white'}`}
-        style={{
-          boxShadow: isCompleted 
-            ? "0 8px 32px 0 rgba(167, 243, 208, 0.2)"
-            : "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
-        }}
-      >
-        <DeleteHabitButton habitId={habit.id} habitTitle={habit.title} />
+    <Card 
+      className={`group relative transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col h-[280px]
+        ${isCompleted ? 'bg-habit-success/20 hover:bg-habit-success/30' : 'hover:bg-white'}`}
+      style={{
+        boxShadow: isCompleted 
+          ? "0 8px 32px 0 rgba(167, 243, 208, 0.2)"
+          : "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+      }}
+    >
+      <DeleteHabitButton habitId={habit.id} habitTitle={habit.title} />
+      
+      <CardHeader className="pb-2">
+        <div className="space-y-2">
+          <CardTitle className={`flex items-center gap-2 text-xl ${isCompleted ? 'text-muted-foreground' : ''}`}>
+            {habit.title}
+            {habit.is_popular && (
+              <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
+            )}
+          </CardTitle>
+          <p className={`text-sm ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+            {habit.description}
+          </p>
+        </div>
+      </CardHeader>
+
+      <CardContent className="flex-1 flex flex-col justify-between gap-4">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <CategoryBadge category={habit.category} />
+          <ExperiencePoints points={habit.experience_points} />
+        </div>
         
-        <CardHeader className="pb-2">
-          <div className="space-y-2">
-            <CardTitle className={`flex items-center gap-2 text-xl ${isCompleted ? 'text-muted-foreground' : ''}`}>
-              {habit.title}
-              {habit.is_popular && (
-                <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
-              )}
-            </CardTitle>
-            <p className={`text-sm ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
-              {habit.description}
-            </p>
-          </div>
-        </CardHeader>
+        <CompleteHabitButton 
+          isCompleted={isCompleted}
+          onClick={handleClick}
+        />
+      </CardContent>
+    </Card>
 
-        <CardContent className="flex-1 flex flex-col justify-between gap-4">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <CategoryBadge category={habit.category} />
-            <ExperiencePoints points={habit.experience_points} />
-          </div>
-          
-          <CompleteHabitButton 
-            isCompleted={isCompleted}
-            onClick={handleClick}
-          />
-        </CardContent>
-      </Card>
-
-      <CancelHabitDialog
-        isOpen={showCancelDialog}
-        onClose={() => setShowCancelDialog(false)}
-        onConfirm={handleCancelHabit}
-        habitTitle={habit.title}
-      />
-    </>
+    <CancelHabitDialog
+      isOpen={showCancelDialog}
+      onClose={() => setShowCancelDialog(false)}
+      onConfirm={handleCancelHabit}
+      habitTitle={habit.title}
+    />
   );
 };
