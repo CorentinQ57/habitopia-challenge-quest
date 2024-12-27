@@ -1,9 +1,11 @@
-import { Check, Trophy } from "lucide-react";
+import { Check, Trophy, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface Habit {
   id: string;
@@ -13,6 +15,7 @@ interface Habit {
   category: string;
   frequency: string;
   is_popular: boolean;
+  created_at: string;
 }
 
 interface HabitGridProps {
@@ -33,15 +36,15 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
       if (error) throw error;
 
       toast({
-        title: "Success!",
-        description: "Habit marked as completed.",
+        title: "Bravo !",
+        description: "Habitude marquée comme complétée.",
       });
 
       queryClient.invalidateQueries({ queryKey: ["habits"] });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to mark habit as completed.",
+        title: "Erreur",
+        description: "Impossible de marquer l'habitude comme complétée.",
         variant: "destructive",
       });
     }
@@ -49,8 +52,8 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="space-y-2">
               <Skeleton className="h-4 w-1/2" />
@@ -66,7 +69,7 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {habits?.map((habit) => (
         <Card 
           key={habit.id}
@@ -77,12 +80,12 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
               <CardTitle className="flex items-center gap-2 text-xl">
                 {habit.title}
                 {habit.is_popular && (
-                  <Trophy className="w-4 h-4 text-habit-warning" />
+                  <Trophy className="w-4 h-4 text-yellow-500" />
                 )}
               </CardTitle>
               <button 
                 onClick={() => handleComplete(habit.id)}
-                className="habit-button bg-habit-success/20 text-habit-success hover:bg-habit-success/30"
+                className="habit-button bg-habit-success/20 text-green-600 hover:bg-habit-success/30 group-hover:scale-110 transition-all"
               >
                 <Check className="w-4 h-4" />
               </button>
@@ -90,13 +93,24 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
             <p className="text-sm text-muted-foreground">{habit.description}</p>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between text-sm">
-              <span className="px-2 py-1 rounded-full bg-habit-info/20 text-habit-info">
-                {habit.category}
-              </span>
-              <span className="text-muted-foreground">
-                {habit.frequency}
-              </span>
+            <div className="flex flex-col space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="px-2 py-1 rounded-full bg-habit-info/20 text-blue-600">
+                  {habit.category}
+                </span>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                  {format(new Date(habit.created_at), "d MMMM yyyy", { locale: fr })}
+                </span>
+              </div>
+              <div className="text-sm text-muted-foreground flex items-center justify-between">
+                <span>Fréquence:</span>
+                <span className="font-medium text-foreground">
+                  {habit.frequency === 'daily' ? 'Quotidienne' :
+                   habit.frequency === 'weekly' ? 'Hebdomadaire' : 
+                   'Mensuelle'}
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>
