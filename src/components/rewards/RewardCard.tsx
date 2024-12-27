@@ -67,16 +67,21 @@ export const RewardCard = ({ reward, totalXP, getLevelIcon, getLevelColor }: Rew
 
   const handleDelete = async () => {
     try {
+      console.log("Deleting reward:", reward.id); // Debug log
+
       const { error } = await supabase
         .from("rewards")
         .delete()
         .eq("id", reward.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Delete error:", error); // Debug log
+        throw error;
+      }
 
-      // Invalider à la fois la liste des récompenses et le statut de possession
-      queryClient.invalidateQueries({ queryKey: ["rewards"] });
-      queryClient.invalidateQueries({ queryKey: ["rewardOwnership", reward.id] });
+      // Invalider les requêtes après une suppression réussie
+      await queryClient.invalidateQueries({ queryKey: ["rewards"] });
+      await queryClient.invalidateQueries({ queryKey: ["rewardOwnership"] });
       
       toast({
         title: "Récompense supprimée",
