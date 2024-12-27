@@ -100,13 +100,13 @@ export function AppSidebar() {
                       <item.icon className={`
                         h-5 w-5 transition-colors duration-300
                         ${location.pathname === item.url 
-                          ? 'text-white' 
+                          ? 'text-gray-600' 
                           : 'text-gray-600'}
                       `} />
                       <span className={`
                         font-medium transition-colors duration-300
                         ${location.pathname === item.url 
-                          ? 'text-white bg-gradient-to-r from-stella-royal to-stella-purple px-3 py-1 rounded-md' 
+                          ? 'bg-gradient-to-r from-[#a8c0ff] to-[#3f2b96] text-gray-600 px-3 py-1 rounded-md' 
                           : 'text-gray-600'}
                       `}>
                         {item.title}
