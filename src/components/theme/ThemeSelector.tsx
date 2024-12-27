@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 export const ThemeSelector = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: userSkins } = useQuery({
+  const { data: activeTheme } = useQuery({
     queryKey: ["activeTheme"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -90,8 +91,6 @@ export const ThemeSelector = () => {
     },
   });
 
-  const activeTheme = userSkins?.skin_id;
-
   const defaultTheme = {
     id: "default",
     title: "Thème par défaut",
@@ -99,8 +98,28 @@ export const ThemeSelector = () => {
       primary: "hsl(var(--primary))",
       secondary: "hsl(var(--secondary))",
       accent: "hsl(var(--accent))",
+      background: "linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)"
     },
   };
+
+  useEffect(() => {
+    const theme = activeTheme?.skin?.theme_colors;
+    if (theme) {
+      document.documentElement.style.setProperty('--theme-primary', theme.primary);
+      document.documentElement.style.setProperty('--theme-secondary', theme.secondary);
+      document.documentElement.style.setProperty('--theme-accent', theme.accent);
+      document.body.dataset.themeBackground = theme.background;
+      document.body.style.backgroundImage = theme.background;
+    } else {
+      // Reset to default theme
+      const defaultColors = defaultTheme.theme_colors;
+      document.documentElement.style.setProperty('--theme-primary', defaultColors.primary);
+      document.documentElement.style.setProperty('--theme-secondary', defaultColors.secondary);
+      document.documentElement.style.setProperty('--theme-accent', defaultColors.accent);
+      document.body.style.backgroundImage = defaultColors.background;
+      delete document.body.dataset.themeBackground;
+    }
+  }, [activeTheme]);
 
   const handleThemeChange = (value: string) => {
     updateThemeMutation.mutate(value);
@@ -116,12 +135,12 @@ export const ThemeSelector = () => {
       <h3 className="text-lg font-semibold">Thème actif</h3>
       
       <RadioGroup
-        value={activeTheme || "default"}
+        value={activeTheme?.skin_id || "default"}
         onValueChange={handleThemeChange}
         className="grid grid-cols-2 gap-4"
       >
         {availableThemes.map((theme) => {
-          const colors = theme.theme_colors as { primary: string; secondary: string; accent: string };
+          const colors = theme.theme_colors;
           
           return (
             <div key={theme.id} className="relative">
@@ -132,20 +151,22 @@ export const ThemeSelector = () => {
               />
               <Label
                 htmlFor={theme.id}
-                className="flex flex-col gap-2 rounded-lg border-2 border-muted p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                className="flex flex-col gap-2 rounded-lg border-2 border-muted p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all duration-300 card-themed"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{theme.title}</span>
-                  <Check className="h-4 w-4 opacity-0 peer-data-[state=checked]:opacity-100" />
+                  <Check className="w-4 h-4 opacity-0 peer-data-[state=checked]:opacity-100 transition-opacity" />
                 </div>
                 
                 <div className="flex gap-2">
-                  {Object.values(colors).map((color, index) => (
-                    <div
-                      key={index}
-                      className="h-6 w-6 rounded-full"
-                      style={{ backgroundColor: color }}
-                    />
+                  {Object.entries(colors).map(([key, color]) => (
+                    key !== 'background' && (
+                      <div
+                        key={key}
+                        className="h-6 w-6 rounded-full"
+                        style={{ backgroundColor: color }}
+                      />
+                    )
                   ))}
                 </div>
               </Label>
