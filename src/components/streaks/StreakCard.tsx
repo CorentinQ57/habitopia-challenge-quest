@@ -5,6 +5,7 @@ import { Flame, Snowflake } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { FreezeButton } from "./FreezeButton";
 import { StreakStats } from "./StreakStats";
+import { cn } from "@/lib/utils";
 
 export const StreakCard = () => {
   const queryClient = useQueryClient();
@@ -70,7 +71,10 @@ export const StreakCard = () => {
                         streak.tasks_completed_today === 0;
 
   return (
-    <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 backdrop-blur-sm">
+    <Card className={cn(
+      "bg-gradient-to-br from-orange-500/10 to-red-500/10 backdrop-blur-sm transition-colors duration-300",
+      isStreakFrozen && "from-blue-500/10 to-blue-400/10"
+    )}>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
