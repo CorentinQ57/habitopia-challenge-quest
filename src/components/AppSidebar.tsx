@@ -1,4 +1,4 @@
-import { LayoutDashboard, ListCheck, BarChart, UserRound, LogOut } from "lucide-react";
+import { LayoutDashboard, ListCheck, BarChart, UserRound, LogOut, Sparkles, User } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -36,6 +36,11 @@ const menuItems = [
     title: "Personnage",
     url: "/personnage",
     icon: UserRound,
+  },
+  {
+    title: "Profil",
+    url: "/profil",
+    icon: User,
   },
 ];
 
@@ -82,7 +87,10 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sm font-medium text-gray-500/80">Menu</SidebarGroupLabel>
+          <div className="flex items-center gap-2 px-4 py-2">
+            <Sparkles className="h-6 w-6 text-stella-royal" />
+            <span className="font-abril text-lg">Stella</span>
+          </div>
           <div className="mt-2">
             <SidebarMenu>
               {menuItems.map((item) => (
