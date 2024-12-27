@@ -1,15 +1,36 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
-import { TodoList } from "@/components/TodoList";
+import { HabitGrid } from "@/components/HabitGrid";
 import { WeatherWidget } from "@/components/WeatherWidget";
+import { TodoList } from "@/components/TodoList";
 
 const Index = () => {
+  const { data: habits, isLoading } = useQuery({
+    queryKey: ["habits"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("habits")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <div className="min-h-screen p-8 bg-background">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto space-y-8">
         <Header />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <WeatherWidget />
-          <TodoList />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <HabitGrid habits={habits} isLoading={isLoading} />
+          </div>
+          <div className="space-y-8">
+            <WeatherWidget />
+            <TodoList />
+          </div>
         </div>
       </div>
     </div>

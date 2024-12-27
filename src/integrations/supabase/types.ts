@@ -9,7 +9,71 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      habit_logs: {
+        Row: {
+          completed_at: string
+          habit_id: string | null
+          id: string
+          notes: string | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string
+          habit_id?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+        }
+        Update: {
+          completed_at?: string
+          habit_id?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_logs_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          frequency: string
+          icon: string | null
+          id: string
+          is_popular: boolean | null
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          frequency: string
+          icon?: string | null
+          id?: string
+          is_popular?: boolean | null
+          title: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          icon?: string | null
+          id?: string
+          is_popular?: boolean | null
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

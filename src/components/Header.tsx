@@ -1,4 +1,5 @@
-import { Calendar } from "lucide-react";
+import { Calendar, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const Header = () => {
   const today = new Date();
@@ -15,18 +16,17 @@ export const Header = () => {
           {today.toLocaleDateString('fr-FR', { 
             day: 'numeric',
             month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            year: 'numeric'
           })}
         </p>
       </div>
-      <button className="habit-button bg-habit-warning text-primary-foreground font-medium">
-        <span className="flex items-center gap-2">
-          <Calendar className="w-4 h-4" />
-          + New Habit
-        </span>
-      </button>
+      <Button 
+        variant="outline"
+        className="gap-2 bg-habit-warning/20 hover:bg-habit-warning/30 border-0"
+      >
+        <Plus className="w-4 h-4" />
+        New Habit
+      </Button>
     </div>
   );
 };
