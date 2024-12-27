@@ -3,7 +3,8 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Gem, Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Gem, Check, Badge as BadgeIcon } from "lucide-react";
 
 interface SkinCardProps {
   skin: {
@@ -101,6 +102,13 @@ export const SkinCard = ({ skin, canPurchase }: SkinCardProps) => {
 
   return (
     <div className="relative overflow-hidden rounded-lg border bg-gradient-to-br from-background/50 to-background/30 p-4 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
+      {isOwned && (
+        <Badge className="absolute right-2 top-2 z-10 flex items-center gap-1.5 bg-primary/20 text-primary hover:bg-primary/30">
+          <BadgeIcon className="h-3 w-3" />
+          Possédé
+        </Badge>
+      )}
+      
       {skin.preview_url && (
         <div className="mb-4 aspect-video w-full overflow-hidden rounded-md">
           <img 
