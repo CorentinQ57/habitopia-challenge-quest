@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Gem, ShoppingBag, Award } from "lucide-react";
+import { Gem, ShoppingBag, Award, Trophy, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -76,14 +76,29 @@ export const RewardShop = () => {
     }
   };
 
+  const getLevelIcon = (level: number) => {
+    switch (level) {
+      case 1:
+        return <Star className="w-5 h-5 text-yellow-500" />;
+      case 2:
+        return <Award className="w-5 h-5 text-blue-500" />;
+      case 3:
+        return <Gem className="w-5 h-5 text-purple-500" />;
+      case 4:
+        return <Trophy className="w-5 h-5 text-amber-500" />;
+      default:
+        return <Star className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
   const getLevelColor = (level: number): string => {
     const colors = {
-      1: "bg-emerald-100 text-emerald-700",
-      2: "bg-blue-100 text-blue-700",
-      3: "bg-purple-100 text-purple-700",
-      4: "bg-amber-100 text-amber-700",
+      1: "bg-yellow-100 text-yellow-700 border-yellow-200",
+      2: "bg-blue-100 text-blue-700 border-blue-200",
+      3: "bg-purple-100 text-purple-700 border-purple-200",
+      4: "bg-amber-100 text-amber-700 border-amber-200",
     };
-    return colors[level as keyof typeof colors] || "bg-gray-100 text-gray-700";
+    return colors[level as keyof typeof colors] || "bg-gray-100 text-gray-700 border-gray-200";
   };
 
   return (
@@ -99,34 +114,36 @@ export const RewardShop = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 max-w-2xl mx-auto">
         {rewards?.map((reward) => (
-          <Card key={reward.id} className="overflow-hidden transition-all duration-300 hover:shadow-lg">
+          <Card 
+            key={reward.id} 
+            className={`overflow-hidden transition-all duration-300 hover:shadow-lg border-l-4 ${getLevelColor(reward.level)}`}
+          >
             <CardHeader className="pb-4">
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-lg">{reward.title}</CardTitle>
-                <span className={`px-3 py-1 rounded-full text-sm ${getLevelColor(reward.level)}`}>
-                  Niveau {reward.level}
-                </span>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  {getLevelIcon(reward.level)}
+                  <CardTitle className="text-lg">{reward.title}</CardTitle>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Gem className="w-4 h-4 text-primary" />
+                  <span className="font-semibold">{reward.cost} XP</span>
+                </div>
               </div>
               {reward.description && (
-                <p className="text-sm text-muted-foreground">{reward.description}</p>
+                <p className="text-sm text-muted-foreground mt-2">{reward.description}</p>
               )}
             </CardHeader>
             <CardContent>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-1.5">
-                  <Award className="w-5 h-5 text-primary" />
-                  <span className="font-semibold">{reward.cost} XP</span>
-                </div>
-                <Button
-                  onClick={() => purchaseReward(reward)}
-                  disabled={totalXP ? totalXP < reward.cost : true}
-                  variant={totalXP && totalXP >= reward.cost ? "default" : "outline"}
-                >
-                  {totalXP && totalXP >= reward.cost ? "Débloquer" : "Points insuffisants"}
-                </Button>
-              </div>
+              <Button
+                onClick={() => purchaseReward(reward)}
+                disabled={totalXP ? totalXP < reward.cost : true}
+                variant={totalXP && totalXP >= reward.cost ? "default" : "outline"}
+                className="w-full"
+              >
+                {totalXP && totalXP >= reward.cost ? "Débloquer" : "Points insuffisants"}
+              </Button>
             </CardContent>
           </Card>
         ))}
