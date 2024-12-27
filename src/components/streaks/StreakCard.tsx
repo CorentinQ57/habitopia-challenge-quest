@@ -14,10 +14,11 @@ export const StreakCard = () => {
   const { data: streak } = useQuery({
     queryKey: ["userStreak"],
     queryFn: async () => {
-      // First try to get any existing streak
+      // First try to get the most recent streak
       const { data: streaks, error: fetchError } = await supabase
         .from("user_streaks")
         .select("*")
+        .order('created_at', { ascending: false })
         .limit(1);
 
       if (fetchError) throw fetchError;
