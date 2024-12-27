@@ -35,29 +35,51 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
         .gte("completed_at", `${today}T00:00:00`)
         .lte("completed_at", `${today}T23:59:59`);
 
-      // 2. Récupérer ou créer l'enregistrement user_streaks
+      if (habitsCompleted && habitsCompleted.length >= 3) {
+        toast({
+          title: "Limite atteinte",
+          description: "Vous avez déjà complété 3 habitudes aujourd'hui !",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 2. Récupérer l'enregistrement user_streaks actuel
       const { data: existingStreak } = await supabase
         .from("user_streaks")
         .select("*")
         .maybeSingle();
+
+      const tasksCompletedToday = (habitsCompleted?.length || 0) + 1;
 
       if (!existingStreak) {
         // Créer un nouvel enregistrement si aucun n'existe
         await supabase
           .from("user_streaks")
           .insert([{
-            tasks_completed_today: 1,
+            tasks_completed_today: tasksCompletedToday,
             last_activity_date: today,
             current_streak: 0,
             longest_streak: 0
           }]);
       } else {
         // Mettre à jour l'enregistrement existant
+        const shouldIncrementStreak = tasksCompletedToday === 3 && 
+          existingStreak.last_activity_date !== today;
+
+        const newCurrentStreak = shouldIncrementStreak 
+          ? existingStreak.current_streak + 1 
+          : existingStreak.current_streak;
+
+        const newLongestStreak = Math.max(newCurrentStreak, existingStreak.longest_streak);
+
         const { error: streakError } = await supabase
           .from("user_streaks")
           .update({
-            tasks_completed_today: (habitsCompleted?.length || 0) + 1,
-            last_activity_date: today
+            tasks_completed_today: tasksCompletedToday,
+            last_activity_date: today,
+            current_streak: newCurrentStreak,
+            longest_streak: newLongestStreak
           })
           .eq('id', existingStreak.id);
 
