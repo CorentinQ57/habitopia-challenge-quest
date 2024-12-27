@@ -2,6 +2,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Category {
   id: string;
@@ -95,16 +107,31 @@ export const CategoryList = ({ categories, onUpdate }: CategoryListProps) => {
                 onChange={(e) => handleColorChange(category.id, e.target.value)}
                 className="w-8 h-8 p-0 border-0"
               />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDelete(category.id)}
-                className="relative transition-all duration-300 hover:bg-white hover:shadow-[0_4px_0_rgb(63,43,150)] active:shadow-none active:translate-y-1 group"
-              >
-                <span className="relative z-10 group-hover:bg-gradient-to-r group-hover:from-[#a8c0ff] group-hover:to-[#3f2b96] group-hover:bg-clip-text group-hover:text-transparent">
-                  Supprimer
-                </span>
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-2 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Supprimer la catégorie</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Êtes-vous sûr de vouloir supprimer la catégorie "{category.name}" ? Cette action est irréversible.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDelete(category.id)}>
+                      Supprimer
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           )}
         </div>
