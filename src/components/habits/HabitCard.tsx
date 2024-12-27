@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { updateUserStreak } from "@/utils/streakManagement";
 import { CancelHabitDialog } from "./CancelHabitDialog";
 import { CategoryBadge } from "./CategoryBadge";
@@ -31,6 +31,24 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
+  // Vérifier si l'habitude a déjà été complétée aujourd'hui
+  useEffect(() => {
+    const checkIfCompleted = async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: habitLog } = await supabase
+        .from("habit_logs")
+        .select("*")
+        .eq("habit_id", habit.id)
+        .gte("completed_at", `${today}T00:00:00`)
+        .lte("completed_at", `${today}T23:59:59`)
+        .single();
+
+      setIsCompleted(!!habitLog);
+    };
+
+    checkIfCompleted();
+  }, [habit.id]);
+
   const handleClick = () => {
     if (isCompleted) {
       setShowCancelDialog(true);
@@ -52,6 +70,16 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       await updateUserStreak(tasksCompletedToday);
 
+      // Supprimer l'entrée du journal d'habitudes
+      const { error: deleteError } = await supabase
+        .from("habit_logs")
+        .delete()
+        .eq("habit_id", habit.id)
+        .gte("completed_at", `${today}T00:00:00`)
+        .lte("completed_at", `${today}T23:59:59`);
+
+      if (deleteError) throw deleteError;
+
       setIsCompleted(false);
       setShowCancelDialog(false);
 
@@ -60,6 +88,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
       queryClient.invalidateQueries({ queryKey: ["weeklyStats"] });
+      queryClient.invalidateQueries({ queryKey: ["habits"] });
 
       toast({
         title: "Habitude annulée",
@@ -99,11 +128,13 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       setIsCompleted(true);
       
+      // Invalider toutes les requêtes pertinentes pour forcer le rafraîchissement
       queryClient.invalidateQueries({ queryKey: ["habitLogs"] });
       queryClient.invalidateQueries({ queryKey: ["todayXP"] });
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
       queryClient.invalidateQueries({ queryKey: ["weeklyStats"] });
+      queryClient.invalidateQueries({ queryKey: ["habits"] });
 
       toast({
         title: "Bravo !",
@@ -122,7 +153,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
     <>
       <Card 
         className={`group relative transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col h-[280px] noise
-          ${isCompleted ? 'bg-habit-success/20 hover:bg-habit-success/30' : 'hover:bg-stella-royal/5'}`}
+          ${isCompleted ? 'bg-habit-success/20 hover:bg-habit-success/30 order-last' : 'hover:bg-stella-royal/5'}`}
         style={{
           boxShadow: isCompleted 
             ? "0 8px 32px 0 rgba(167, 243, 208, 0.2)"
