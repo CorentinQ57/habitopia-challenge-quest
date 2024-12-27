@@ -97,10 +97,11 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       setIsCompleted(true);
       
-      // Invalider les queries pour rafraîchir l'XP et les streaks
+      // Invalider les queries pour rafraîchir l'XP, les streaks et les statistiques
       queryClient.invalidateQueries({ queryKey: ["todayXP"] });
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
+      queryClient.invalidateQueries({ queryKey: ["weeklyStats"] }); // Ajout de cette ligne
 
       toast({
         title: "Bravo !",
