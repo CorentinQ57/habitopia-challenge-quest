@@ -1,11 +1,9 @@
-import { Header } from "@/components/Header";
-import { RewardGrid } from "@/components/rewards/RewardGrid";
+import { RewardShop } from "@/components/RewardShop";
 
 const RewardManagement = () => {
   return (
-    <div className="space-y-8">
-      <Header />
-      <RewardGrid />
+    <div className="container mx-auto p-4 space-y-8">
+      <RewardShop />
     </div>
   );
 };

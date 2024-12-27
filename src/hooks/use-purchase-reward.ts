@@ -1,55 +1,28 @@
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface Reward {
   id: string;
   title: string;
-  description: string;
   cost: number;
-  level: number;
   is_freeze_token?: boolean;
 }
 
 export const usePurchaseReward = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isPurchasing, setIsPurchasing] = useState(false);
 
-  const purchaseReward = async (reward: Reward, totalXP: number) => {
-    if (totalXP < reward.cost) {
-      toast({
-        title: "Points insuffisants",
-        description: `Il vous manque ${reward.cost - totalXP} points d'expérience.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsPurchasing(true);
+  const { mutate: purchaseReward, isPending: isPurchasing } = useMutation({
+    mutationFn: async ({ reward, totalXP }: { reward: Reward; totalXP: number }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // 1. Vérifier si l'utilisateur possède déjà la récompense
-      const { data: existingReward } = await supabase
-        .from("user_rewards")
-        .select("id")
-        .eq("reward_id", reward.id)
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (existingReward) {
-        toast({
-          title: "Récompense déjà possédée",
-          description: "Vous possédez déjà cette récompense !",
-          variant: "destructive",
-        });
-        return;
+      if (totalXP < reward.cost) {
+        throw new Error("Insufficient XP");
       }
 
-      // 2. Déduire les points d'expérience
+      // Déduire les points d'expérience
       const { error: xpError } = await supabase
         .from("habit_logs")
         .insert([{
@@ -61,7 +34,7 @@ export const usePurchaseReward = () => {
 
       if (xpError) throw xpError;
 
-      // 3. Ajouter la récompense à l'utilisateur
+      // Ajouter la récompense à l'utilisateur
       const { error: purchaseError } = await supabase
         .from("user_rewards")
         .insert([{ 
@@ -83,49 +56,40 @@ export const usePurchaseReward = () => {
         throw purchaseError;
       }
 
-      // 4. Gérer le jeton de gel si applicable
+      // Si c'est un glaçon, ajouter un jeton de gel
       if (reward.is_freeze_token) {
-        const { data: streakData, error: streakError } = await supabase
-          .from("user_streaks")
-          .select("freeze_tokens")
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (streakError) throw streakError;
-
         const { error: freezeError } = await supabase
           .from("user_streaks")
           .update({ 
-            freeze_tokens: (streakData?.freeze_tokens || 0) + 1
+            freeze_tokens: supabase.sql`freeze_tokens + 1` 
           })
-          .eq('user_id', user.id);
+          .eq("user_id", user.id);
 
         if (freezeError) throw freezeError;
       }
 
-      // 5. Invalider les requêtes pour mettre à jour l'interface
+      return { success: true };
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userRewards"] });
-      queryClient.invalidateQueries({ queryKey: ["rewardOwnership", reward.id] });
-      if (reward.is_freeze_token) {
-        queryClient.invalidateQueries({ queryKey: ["userStreak"] });
-      }
-
+      queryClient.invalidateQueries({ queryKey: ["userStreaks"] });
       toast({
-        title: "Récompense débloquée !",
-        description: `Vous avez débloqué : ${reward.title}`,
+        title: "Récompense achetée !",
+        description: "La récompense a été ajoutée à votre inventaire.",
       });
-    } catch (error) {
-      console.error("Erreur lors de l'achat:", error);
+    },
+    onError: (error) => {
       toast({
         title: "Erreur",
-        description: "Impossible d'acheter la récompense.",
+        description: error.message || "Impossible d'acheter la récompense.",
         variant: "destructive",
       });
-    } finally {
-      setIsPurchasing(false);
-    }
-  };
+    },
+  });
 
-  return { purchaseReward, isPurchasing };
+  return {
+    purchaseReward: (reward: Reward, totalXP: number) => purchaseReward({ reward, totalXP }),
+    isPurchasing,
+  };
 };
