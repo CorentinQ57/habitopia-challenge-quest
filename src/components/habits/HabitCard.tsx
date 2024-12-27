@@ -8,6 +8,7 @@ import { CategoryBadge } from "./CategoryBadge";
 import { ExperiencePoints } from "./ExperiencePoints";
 import { HabitCardHeader } from "./HabitCardHeader";
 import { HabitCardActions } from "./HabitCardActions";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface Habit {
   id: string;
