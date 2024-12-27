@@ -70,11 +70,15 @@ export const StreakCard = () => {
     }
 
     try {
+      // Mettre à jour le streak en ajoutant +1 et en marquant le glaçon comme utilisé
       const { error } = await supabase
         .from("user_streaks")
         .update({ 
           freeze_tokens: streak.freeze_tokens - 1,
-          freeze_used_date: today
+          freeze_used_date: today,
+          current_streak: streak.current_streak + 1,
+          longest_streak: Math.max(streak.longest_streak, streak.current_streak + 1),
+          tasks_completed_today: 3 // On considère que le glaçon valide la journée
         })
         .eq("id", streak.id)
         .eq("user_id", streak.user_id);

@@ -118,16 +118,28 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
       if (!user) return;
 
       const today = new Date().toISOString().split('T')[0];
-      const { data: habitsCompleted } = await supabase
-        .from("habit_logs")
-        .select("id")
+      
+      // Vérifier si un glaçon a été utilisé aujourd'hui
+      const { data: userStreak } = await supabase
+        .from("user_streaks")
+        .select("freeze_used_date")
         .eq("user_id", user.id)
-        .gte("completed_at", `${today}T00:00:00`)
-        .lte("completed_at", `${today}T23:59:59`);
+        .single();
 
-      const tasksCompletedToday = (habitsCompleted?.length || 0) + 1;
+      const isStreakFrozen = userStreak?.freeze_used_date === today;
 
-      await updateUserStreak(tasksCompletedToday);
+      // Si un glaçon a été utilisé, on ne compte pas les habitudes pour la série
+      if (!isStreakFrozen) {
+        const { data: habitsCompleted } = await supabase
+          .from("habit_logs")
+          .select("id")
+          .eq("user_id", user.id)
+          .gte("completed_at", `${today}T00:00:00`)
+          .lte("completed_at", `${today}T23:59:59`);
+
+        const tasksCompletedToday = (habitsCompleted?.length || 0) + 1;
+        await updateUserStreak(tasksCompletedToday);
+      }
 
       const { error: habitError } = await supabase
         .from("habit_logs")
@@ -142,7 +154,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       setIsCompleted(true);
       
-      // Invalider toutes les requêtes pertinentes pour forcer le rafraîchissement
+      // Invalider toutes les requêtes pertinentes
       queryClient.invalidateQueries({ queryKey: ["habitLogs"] });
       queryClient.invalidateQueries({ queryKey: ["todayXP"] });
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
