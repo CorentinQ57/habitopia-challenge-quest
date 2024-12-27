@@ -22,10 +22,12 @@ export const CategoryManager = () => {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       
+      if (!user) throw new Error("User not authenticated");
+
       const { data, error } = await supabase
         .from("habit_categories")
         .select("*")
-        .or(`user_id.eq.${user?.id},is_default.eq.true`)
+        .or(`user_id.eq.${user.id},is_default.eq.true`)
         .order("is_default", { ascending: false })
         .order("name");
       

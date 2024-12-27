@@ -19,6 +19,8 @@ export const CategoryList = ({ categories, onUpdate }: CategoryListProps) => {
   const { toast } = useToast();
 
   const handleColorChange = async (id: string, newColor: string) => {
+    if (!id) return;
+    
     try {
       const { error } = await supabase
         .from("habit_categories")
@@ -43,6 +45,8 @@ export const CategoryList = ({ categories, onUpdate }: CategoryListProps) => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!id) return;
+    
     try {
       const { error } = await supabase
         .from("habit_categories")
