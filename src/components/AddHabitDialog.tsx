@@ -79,9 +79,15 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {variant === "button" ? (
-          <Button variant="outline" className="gap-2 bg-habit-warning/20 hover:bg-habit-warning/30 border-0">
-            <Plus className="w-4 h-4" />
-            Nouvelle Habitude
+          <Button 
+            variant="outline" 
+            className="group relative overflow-hidden bg-gradient-to-br from-stella-royal to-stella-purple shadow-lg hover:shadow-stella-royal/50 transition-all duration-300 animate-bounce-scale border-b-4 border-stella-purple/20 active:border-b-0 active:translate-y-1"
+          >
+            <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-colors" />
+            <span className="relative flex items-center gap-2 text-stella-white">
+              <Plus className="w-4 h-4" />
+              Nouvelle Habitude
+            </span>
           </Button>
         ) : (
           <div className="h-[280px] rounded-lg border border-dashed border-gray-300 bg-gray-50/50 hover:bg-gray-50/80 transition-colors cursor-pointer flex items-center justify-center">

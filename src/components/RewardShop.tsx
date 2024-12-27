@@ -60,14 +60,12 @@ export const RewardShop = () => {
     }
 
     try {
-      // Insérer l'achat de la récompense
       const { error: purchaseError } = await supabase
         .from("user_rewards")
         .insert([{ reward_id: reward.id }]);
 
       if (purchaseError) throw purchaseError;
 
-      // Si c'est un glaçon, mettre à jour le nombre de glaçons disponibles
       if (reward.is_freeze_token) {
         const { data: streakData, error: streakError } = await supabase
           .from("user_streaks")
@@ -86,7 +84,6 @@ export const RewardShop = () => {
         if (freezeError) throw freezeError;
       }
 
-      // Déduire l'XP en ajoutant un log négatif
       const { error: xpError } = await supabase
         .from("habit_logs")
         .insert([{
@@ -97,7 +94,6 @@ export const RewardShop = () => {
 
       if (xpError) throw xpError;
 
-      // Rafraîchir les données
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
 
@@ -144,11 +140,11 @@ export const RewardShop = () => {
     <Sheet>
       <SheetTrigger asChild>
         <Button
-          className="group relative overflow-hidden bg-gradient-to-br from-primary/90 to-primary shadow-lg hover:shadow-primary/50 transition-all duration-300 animate-bounce-scale border-b-4 border-primary-foreground/20 active:border-b-0 active:translate-y-1"
+          className="group relative overflow-hidden bg-gradient-to-br from-stella-black via-stella-royal to-stella-purple shadow-lg hover:shadow-stella-purple/50 transition-all duration-300 animate-bounce-scale border-b-4 border-stella-purple/20 active:border-b-0 active:translate-y-1 w-full"
           size="lg"
         >
           <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-colors" />
-          <span className="relative flex items-center gap-2">
+          <span className="relative flex items-center gap-2 text-stella-white">
             <ShoppingBag className="w-5 h-5" />
             Boutique
             <div className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full text-sm">

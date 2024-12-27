@@ -1,4 +1,4 @@
-import { Calendar } from "lucide-react";
+import { Calendar, Plus } from "lucide-react";
 import { AddHabitDialog } from "./AddHabitDialog";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
