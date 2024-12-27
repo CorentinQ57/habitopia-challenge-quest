@@ -53,11 +53,16 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         habit: {
-          success: "#A3E4D7",
-          warning: "#FFE5A3",
-          danger: "#FADBD8",
-          info: "#D4E6F1",
+          success: "#A7F3D0",
+          warning: "#FDE68A",
+          danger: "#FDB4B4",
+          info: "#A0DFFF",
         },
+      },
+      fontFamily: {
+        poppins: ["Poppins", "sans-serif"],
+        inter: ["Inter", "sans-serif"],
+        nunito: ["Nunito Sans", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
