@@ -1,6 +1,9 @@
 import { Check, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Habit {
   id: string;
@@ -18,6 +21,32 @@ interface HabitGridProps {
 }
 
 export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const handleComplete = async (habitId: string) => {
+    try {
+      const { error } = await supabase
+        .from("habit_logs")
+        .insert([{ habit_id: habitId }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success!",
+        description: "Habit marked as completed.",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["habits"] });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to mark habit as completed.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -51,7 +80,10 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
                   <Trophy className="w-4 h-4 text-habit-warning" />
                 )}
               </CardTitle>
-              <button className="habit-button bg-habit-success/20 text-habit-success hover:bg-habit-success/30">
+              <button 
+                onClick={() => handleComplete(habit.id)}
+                className="habit-button bg-habit-success/20 text-habit-success hover:bg-habit-success/30"
+              >
                 <Check className="w-4 h-4" />
               </button>
             </div>

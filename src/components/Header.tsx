@@ -1,5 +1,5 @@
-import { Calendar, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Calendar } from "lucide-react";
+import { AddHabitDialog } from "./AddHabitDialog";
 
 export const Header = () => {
   const today = new Date();
@@ -20,13 +20,7 @@ export const Header = () => {
           })}
         </p>
       </div>
-      <Button 
-        variant="outline"
-        className="gap-2 bg-habit-warning/20 hover:bg-habit-warning/30 border-0"
-      >
-        <Plus className="w-4 h-4" />
-        New Habit
-      </Button>
+      <AddHabitDialog />
     </div>
   );
 };
