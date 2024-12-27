@@ -50,34 +50,45 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
           .insert([{
             tasks_completed_today: tasksCompletedToday,
             last_activity_date: today,
-            current_streak: tasksCompletedToday === 3 ? 1 : 0,
-            longest_streak: tasksCompletedToday === 3 ? 1 : 0
+            current_streak: tasksCompletedToday >= 3 ? 1 : 0,
+            longest_streak: tasksCompletedToday >= 3 ? 1 : 0
           }]);
       } else {
         // Mettre à jour l'enregistrement existant
         const lastActivityDate = existingStreak.last_activity_date;
         const isNewDay = lastActivityDate !== today;
         
-        // On incrémente la série uniquement si :
-        // 1. C'est un nouveau jour
-        // 2. On atteint exactement 3 tâches aujourd'hui
-        const shouldIncrementStreak = isNewDay && tasksCompletedToday === 3;
+        let newCurrentStreak = existingStreak.current_streak;
+        let newLongestStreak = existingStreak.longest_streak;
 
-        const newCurrentStreak = shouldIncrementStreak 
-          ? existingStreak.current_streak + 1 
-          : existingStreak.current_streak;
-
-        const newLongestStreak = Math.max(newCurrentStreak, existingStreak.longest_streak);
+        if (isNewDay) {
+          // Si c'est un nouveau jour, on vérifie si hier on avait complété au moins 3 tâches
+          if (existingStreak.tasks_completed_today >= 3) {
+            // On garde la série en cours
+            if (tasksCompletedToday >= 3) {
+              // Si on a déjà 3 tâches aujourd'hui, on incrémente la série
+              newCurrentStreak += 1;
+              newLongestStreak = Math.max(newCurrentStreak, existingStreak.longest_streak);
+            }
+          } else {
+            // On a raté hier, on remet à zéro sauf si on atteint 3 tâches aujourd'hui
+            newCurrentStreak = tasksCompletedToday >= 3 ? 1 : 0;
+          }
+        } else {
+          // Même jour, on met à jour uniquement si on atteint 3 tâches
+          if (tasksCompletedToday >= 3 && existingStreak.tasks_completed_today < 3) {
+            newCurrentStreak = existingStreak.current_streak + 1;
+            newLongestStreak = Math.max(newCurrentStreak, existingStreak.longest_streak);
+          }
+        }
 
         const { error: streakError } = await supabase
           .from("user_streaks")
           .update({
             tasks_completed_today: tasksCompletedToday,
             last_activity_date: today,
-            ...(shouldIncrementStreak && {
-              current_streak: newCurrentStreak,
-              longest_streak: newLongestStreak
-            })
+            current_streak: newCurrentStreak,
+            longest_streak: newLongestStreak
           })
           .eq('id', existingStreak.id);
 
@@ -101,7 +112,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
       queryClient.invalidateQueries({ queryKey: ["todayXP"] });
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
-      queryClient.invalidateQueries({ queryKey: ["weeklyStats"] }); // Ajout de cette ligne
+      queryClient.invalidateQueries({ queryKey: ["weeklyStats"] });
 
       toast({
         title: "Bravo !",
