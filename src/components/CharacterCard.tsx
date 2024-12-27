@@ -1,4 +1,4 @@
-import { UserRound, Award, Plus, Store } from "lucide-react";
+import { UserRound, Award, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -85,12 +85,6 @@ export const CharacterCard = () => {
             </div>
           </div>
         </div>
-
-        <button className="w-full py-4 bg-primary rounded-xl flex items-center justify-center gap-3 font-medium hover:bg-primary/90 transition-colors text-lg">
-          <Store className="w-6 h-6" />
-          <span>Boutique</span>
-          <span className="font-semibold">{totalXP || 0} XP</span>
-        </button>
       </div>
     </div>
   );
