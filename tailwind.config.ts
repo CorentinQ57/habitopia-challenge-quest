@@ -53,10 +53,16 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         habit: {
-          success: "#A7F3D0",
+          success: "#A7F3D0", // On garde le vert
           warning: "#FDE68A",
-          danger: "#FDB4B4",
+          danger: "#FDB4B4", // On garde le rouge
           info: "#A0DFFF",
+        },
+        stella: {
+          white: "#FFFFFF",
+          black: "#000000",
+          royal: "#4169E1", // Royal Blue
+          purple: "#8A2BE2", // Vivid Purple
         },
       },
       fontFamily: {
@@ -107,6 +113,9 @@ export default {
         "bounce-scale": "bounce-scale 0.3s ease-in-out",
         "slide-down": "slide-down 0.5s ease-out",
         "slide-up": "slide-up 0.5s ease-out",
+      },
+      backgroundImage: {
+        'stella-gradient': 'linear-gradient(to right, #000000, #4169E1, #8A2BE2)',
       },
     },
   },

@@ -6,25 +6,25 @@
  
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 47.9 95.8% 53.1%;
-    --primary-foreground: 26 83.3% 14.1%;
-    --secondary: 145.7 52.5% 55.3%;
-    --secondary-foreground: 26 83.3% 14.1%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 230 75% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 271 75% 53%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 10% 90%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 271 75% 53%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 230 75% 56%;
     --radius: 1rem;
   }
 
@@ -35,7 +35,7 @@
   body {
     @apply bg-background text-foreground antialiased font-inter;
     font-feature-settings: "rlig" 1, "calt" 1;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f1f5f9' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234169E1' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -43,30 +43,32 @@
   }
 
   h1 {
-    @apply text-4xl font-bold text-black tracking-normal;
+    @apply text-4xl font-bold text-stella-black tracking-normal;
   }
 
   h2 {
-    @apply text-3xl font-bold text-black tracking-normal;
+    @apply text-3xl font-bold text-stella-black tracking-normal;
   }
 
   h3 {
-    @apply text-2xl font-semibold;
+    @apply text-2xl font-semibold text-stella-black;
   }
 
-  .habit-success {
-    @apply bg-emerald-500;
+  .card {
+    @apply bg-white backdrop-blur-sm border border-white/20 shadow-lg;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
   }
 
-  @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+
+  .gradient-card {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, #000000, #4169E1, #8A2BE2);
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-stella-gradient;
   }
 }
