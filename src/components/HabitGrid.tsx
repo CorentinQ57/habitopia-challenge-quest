@@ -10,6 +10,7 @@ interface Habit {
   category: string;
   is_popular: boolean;
   experience_points: number;
+  created_at: string;
 }
 
 interface HabitGridProps {

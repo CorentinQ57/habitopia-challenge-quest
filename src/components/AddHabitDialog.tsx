@@ -12,6 +12,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "./ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +32,8 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [experiencePoints, setExperiencePoints] = useState("10");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -32,10 +41,15 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
     e.preventDefault();
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { error } = await supabase.from("habits").insert([
         {
           title,
           description,
+          category,
+          experience_points: parseInt(experiencePoints),
+          user_id: user?.id,
         },
       ]);
 
@@ -49,6 +63,8 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
       setOpen(false);
       setTitle("");
       setDescription("");
+      setCategory("");
+      setExperiencePoints("10");
       queryClient.invalidateQueries({ queryKey: ["habits"] });
     } catch (error) {
       toast({
@@ -68,7 +84,7 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
             Nouvelle Habitude
           </Button>
         ) : (
-          <div className="h-full min-h-[280px] rounded-lg border border-dashed border-gray-300 bg-gray-50/50 hover:bg-gray-50/80 transition-colors cursor-pointer flex items-center justify-center">
+          <div className="h-[280px] rounded-lg border border-dashed border-gray-300 bg-gray-50/50 hover:bg-gray-50/80 transition-colors cursor-pointer flex items-center justify-center">
             <Plus className="w-12 h-12 text-gray-400" />
           </div>
         )}
@@ -98,6 +114,30 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Prendre un moment pour méditer et se recentrer"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="category">Catégorie</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionnez une catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Health">Santé</SelectItem>
+                  <SelectItem value="Wellness">Bien-être</SelectItem>
+                  <SelectItem value="Learning">Apprentissage</SelectItem>
+                  <SelectItem value="Productivity">Productivité</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="experiencePoints">Points d'expérience</Label>
+              <Input
+                id="experiencePoints"
+                type="number"
+                min="1"
+                value={experiencePoints}
+                onChange={(e) => setExperiencePoints(e.target.value)}
               />
             </div>
           </div>
