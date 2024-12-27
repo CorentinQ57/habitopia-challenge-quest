@@ -299,7 +299,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_user_xp_balance: {
+        Args: {
+          user_auth_id: string
+          required_xp: number
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

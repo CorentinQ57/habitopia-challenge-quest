@@ -38,7 +38,10 @@ export const usePurchaseReward = () => {
           notes: `Achat de la récompense: ${reward.title}`
         }]);
 
-      if (xpError) throw xpError;
+      if (xpError) {
+        console.error("Erreur lors de la déduction des points:", xpError);
+        throw xpError;
+      }
 
       // 2. Ajouter la récompense à l'utilisateur
       const { error: purchaseError } = await supabase
