@@ -95,18 +95,23 @@ export function AppSidebar() {
                   >
                     <Link 
                       to={item.url} 
-                      className="flex items-center gap-3 relative p-2"
+                      className={`
+                        flex items-center gap-3 relative p-2 rounded-md
+                        ${location.pathname === item.url 
+                          ? 'bg-gradient-to-r from-[#a8c0ff] to-[#3f2b96]' 
+                          : ''}
+                      `}
                     >
                       <item.icon className={`
                         h-5 w-5 transition-colors duration-300
                         ${location.pathname === item.url 
-                          ? 'text-gray-600' 
+                          ? 'text-white' 
                           : 'text-gray-600'}
                       `} />
                       <span className={`
                         font-medium transition-colors duration-300
                         ${location.pathname === item.url 
-                          ? 'bg-gradient-to-r from-[#a8c0ff] to-[#3f2b96] text-gray-600 px-3 py-1 rounded-md' 
+                          ? 'text-white' 
                           : 'text-gray-600'}
                       `}>
                         {item.title}
