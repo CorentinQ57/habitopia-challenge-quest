@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { HabitGrid } from "@/components/HabitGrid";
-import { WeatherWidget } from "@/components/WeatherWidget";
+import { CharacterCard } from "@/components/CharacterCard";
 import { TodoList } from "@/components/TodoList";
 
 const Index = () => {
@@ -28,7 +28,7 @@ const Index = () => {
             <HabitGrid habits={habits} isLoading={isLoading} />
           </div>
           <div className="space-y-8">
-            <WeatherWidget />
+            <CharacterCard />
             <TodoList />
           </div>
         </div>
