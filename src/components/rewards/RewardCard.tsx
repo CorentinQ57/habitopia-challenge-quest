@@ -92,8 +92,6 @@ export const RewardCard = ({ reward, totalXP, getLevelIcon, getLevelColor }: Rew
     }
   };
 
-  const isUserReward = reward.user_id === currentUser?.id;
-
   return (
     <>
       <div
@@ -109,7 +107,7 @@ export const RewardCard = ({ reward, totalXP, getLevelIcon, getLevelColor }: Rew
               <Gem className="w-4 h-4 text-primary" />
               <span className="font-semibold">{reward.cost} XP</span>
             </div>
-            {isUserReward && (
+            {!reward.is_freeze_token && (
               <Button
                 variant="ghost"
                 size="icon"
