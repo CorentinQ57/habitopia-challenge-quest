@@ -1,17 +1,32 @@
-import { Check, X } from "lucide-react";
+import { X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import confetti from 'canvas-confetti';
 
 interface CompleteHabitButtonProps {
   isCompleted: boolean;
   onClick: () => void;
 }
 
-export const CompleteHabitButton = ({ isCompleted, onClick }: CompleteHabitButtonProps) => {
+export const CompleteHabitButton = ({
+  isCompleted,
+  onClick,
+}: CompleteHabitButtonProps) => {
+  const handleClick = () => {
+    if (!isCompleted) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.8 }
+      });
+    }
+    onClick();
+  };
+
   return (
-    <button 
-      onClick={onClick}
+    <button
+      onClick={handleClick}
       className={cn(
-        "w-full h-12 rounded-lg transition-all duration-300",
+        "px-4 py-2 rounded-lg transition-all duration-200",
         "flex items-center justify-center gap-2 font-medium",
         "transform hover:-translate-y-1 active:translate-y-0",
         isCompleted 
@@ -22,9 +37,9 @@ export const CompleteHabitButton = ({ isCompleted, onClick }: CompleteHabitButto
     >
       <span>{isCompleted ? "Annuler" : "Valider"}</span>
       {isCompleted ? (
-        <X className="w-5 h-5" />
+        <X className="w-4 h-4" />
       ) : (
-        <Check className="w-5 h-5" />
+        <Check className="w-4 h-4" />
       )}
     </button>
   );

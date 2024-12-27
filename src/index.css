@@ -43,15 +43,11 @@
   }
 
   h1 {
-    @apply text-4xl font-bold -tracking-[0.1em];
-    background: linear-gradient(to right, #467FF7, #A0DFFF);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: gradient 8s ease infinite;
+    @apply text-4xl font-bold text-black tracking-normal;
   }
 
   h2 {
-    @apply text-3xl font-bold -tracking-[0.1em];
+    @apply text-3xl font-bold text-black tracking-normal;
   }
 
   h3 {
