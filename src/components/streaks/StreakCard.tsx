@@ -68,6 +68,16 @@ export const StreakCard = () => {
       return;
     }
 
+    // Si l'utilisateur a déjà complété ses tâches, on ne permet pas l'utilisation du glaçon
+    if (streak.tasks_completed_today >= 3) {
+      toast({
+        title: "Action impossible",
+        description: "Vous avez déjà complété vos tâches aujourd'hui, pas besoin d'utiliser un glaçon !",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // Mettre à jour le streak en ajoutant +1 et en marquant le glaçon comme utilisé
       const { error } = await supabase
