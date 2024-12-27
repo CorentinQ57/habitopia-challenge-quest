@@ -5,7 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import Habits from "./pages/Habits";
+import Statistics from "./pages/Statistics";
 
 const queryClient = new QueryClient();
 
@@ -22,11 +24,11 @@ const App = () => (
               <div className="container mx-auto p-8">
                 <SidebarTrigger className="mb-4" />
                 <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/habitudes" element={<Index />} />
-                  <Route path="/statistiques" element={<Index />} />
-                  <Route path="/personnage" element={<Index />} />
-                  <Route path="/profil" element={<Index />} />
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/habitudes" element={<Habits />} />
+                  <Route path="/statistiques" element={<Statistics />} />
+                  <Route path="/personnage" element={<Dashboard />} />
+                  <Route path="/profil" element={<Dashboard />} />
                 </Routes>
               </div>
             </main>
