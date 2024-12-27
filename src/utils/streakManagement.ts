@@ -1,17 +1,22 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const updateUserStreak = async (tasksCompletedToday: number) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
   const today = new Date().toISOString().split('T')[0];
   
   const { data: existingStreak } = await supabase
     .from("user_streaks")
     .select("*")
+    .eq('user_id', user.id)
     .maybeSingle();
 
   if (!existingStreak) {
     await supabase
       .from("user_streaks")
       .insert([{
+        user_id: user.id,
         tasks_completed_today: tasksCompletedToday,
         last_activity_date: today,
         current_streak: tasksCompletedToday >= 3 ? 1 : 0,
@@ -50,5 +55,6 @@ export const updateUserStreak = async (tasksCompletedToday: number) => {
       current_streak: newCurrentStreak,
       longest_streak: newLongestStreak
     })
-    .eq('id', existingStreak.id);
+    .eq('id', existingStreak.id)
+    .eq('user_id', user.id);
 };
