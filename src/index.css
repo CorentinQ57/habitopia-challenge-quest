@@ -71,4 +71,22 @@
   .gradient-text {
     @apply bg-clip-text text-transparent bg-stella-gradient;
   }
+
+  /* Styles spécifiques au sidebar */
+  [data-sidebar="sidebar"] {
+    @apply bg-white/80 backdrop-blur-md border-r border-stella-black/10;
+  }
+
+  [data-sidebar="menu-button"][data-active="true"] {
+    @apply relative;
+  }
+
+  [data-sidebar="menu-button"][data-active="true"]::before {
+    content: '';
+    @apply absolute -left-2 top-1/2 h-8 w-1 -translate-y-1/2 bg-gradient-to-b from-stella-royal to-stella-purple rounded-r-full;
+  }
+
+  [data-sidebar="menu-button"][data-active="true"] .group {
+    @apply shadow-lg shadow-stella-purple/20;
+  }
 }
