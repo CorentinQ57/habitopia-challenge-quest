@@ -5,8 +5,19 @@ import { WeeklyProgress } from "./WeeklyProgress";
 import { CategoryChart } from "./CategoryChart";
 import { HourlyActivity } from "./HourlyActivity";
 
+interface WeeklyStatsType {
+  day: string;
+  xp: number;
+  count: number;
+}
+
+interface CategoryStatsType {
+  name: string;
+  value: number;
+}
+
 export const StatsSection = () => {
-  const { data: weeklyStats } = useQuery({
+  const { data: weeklyStats } = useQuery<WeeklyStatsType[]>({
     queryKey: ["weeklyStats"],
     queryFn: async () => {
       const today = new Date();
@@ -20,7 +31,7 @@ export const StatsSection = () => {
       
       if (error) throw error;
 
-      const dailyStats = data.reduce((acc: any, log) => {
+      const dailyStats = data.reduce((acc: Record<string, WeeklyStatsType>, log) => {
         const date = new Date(log.completed_at).toLocaleDateString('fr-FR', { weekday: 'short' });
         if (!acc[date]) {
           acc[date] = {
@@ -38,7 +49,7 @@ export const StatsSection = () => {
     },
   });
 
-  const { data: categoryStats } = useQuery({
+  const { data: categoryStats } = useQuery<CategoryStatsType[]>({
     queryKey: ["categoryStats"],
     queryFn: async () => {
       const { data: logs, error } = await supabase
@@ -51,7 +62,7 @@ export const StatsSection = () => {
       
       if (error) throw error;
 
-      const categories = logs.reduce((acc: any, log) => {
+      const categories = logs.reduce((acc: Record<string, number>, log) => {
         const category = log.habits?.category || 'Non catégorisé';
         acc[category] = (acc[category] || 0) + 1;
         return acc;
