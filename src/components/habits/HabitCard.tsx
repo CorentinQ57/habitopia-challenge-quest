@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -41,7 +40,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
         .eq("habit_id", habit.id)
         .gte("completed_at", `${today}T00:00:00`)
         .lte("completed_at", `${today}T23:59:59`)
-        .single();
+        .maybeSingle();
 
       setIsCompleted(!!habitLog);
     };
