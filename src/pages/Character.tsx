@@ -5,6 +5,7 @@ import { CharacterCard } from "@/components/CharacterCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SkinCard } from "@/components/skins/SkinCard";
 import { LoadingSkinGrid } from "@/components/skins/LoadingSkinGrid";
+import { ThemeSelector } from "@/components/theme/ThemeSelector";
 
 const Character = () => {
   const { data: skins, isLoading } = useQuery({
@@ -28,7 +29,10 @@ const Character = () => {
       <h1>Personnage</h1>
       
       <div className="grid gap-8 lg:grid-cols-[350px,1fr]">
-        <CharacterCard />
+        <div className="space-y-8">
+          <CharacterCard />
+          <ThemeSelector />
+        </div>
         
         <Tabs defaultValue="character" className="space-y-6">
           <TabsList>
