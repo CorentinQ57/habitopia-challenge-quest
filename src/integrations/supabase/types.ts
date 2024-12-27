@@ -9,36 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      daily_quests: {
-        Row: {
-          completed_at: string | null
-          created_at: string
-          description: string | null
-          experience_points: number
-          id: string
-          is_active: boolean | null
-          title: string
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string
-          description?: string | null
-          experience_points?: number
-          id?: string
-          is_active?: boolean | null
-          title: string
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string
-          description?: string | null
-          experience_points?: number
-          id?: string
-          is_active?: boolean | null
-          title?: string
-        }
-        Relationships: []
-      }
       habit_logs: {
         Row: {
           completed_at: string

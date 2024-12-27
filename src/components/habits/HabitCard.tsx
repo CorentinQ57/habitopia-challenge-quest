@@ -25,52 +25,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
   const queryClient = useQueryClient();
   const [isCompleted, setIsCompleted] = useState(false);
 
-  const checkAndCompleteQuests = async () => {
-    // Récupérer le nombre d'habitudes complétées aujourd'hui
-    const today = new Date().toISOString().split('T')[0];
-    const { data: habitsCompleted } = await supabase
-      .from("habit_logs")
-      .select("id")
-      .gte("completed_at", today);
-
-    if (habitsCompleted && habitsCompleted.length >= 3) {
-      // Récupérer les quêtes actives non complétées
-      const { data: activeQuests } = await supabase
-        .from("daily_quests")
-        .select("*")
-        .eq("is_active", true)
-        .is("completed_at", null);
-
-      if (activeQuests && activeQuests.length > 0) {
-        // Compléter toutes les quêtes actives
-        for (const quest of activeQuests) {
-          await supabase
-            .from("daily_quests")
-            .update({ completed_at: new Date().toISOString() })
-            .eq("id", quest.id);
-
-          // Ajouter l'XP pour chaque quête complétée
-          await supabase
-            .from("habit_logs")
-            .insert([{
-              notes: "Quête journalière complétée automatiquement",
-              experience_gained: quest.experience_points
-            }]);
-
-          toast({
-            title: "Quête journalière complétée !",
-            description: `+${quest.experience_points} points d'expérience bonus !`,
-          });
-        }
-
-        // Rafraîchir les données
-        queryClient.invalidateQueries({ queryKey: ["dailyQuests"] });
-        queryClient.invalidateQueries({ queryKey: ["todayXP"] });
-        queryClient.invalidateQueries({ queryKey: ["totalXP"] });
-      }
-    }
-  };
-
   const handleComplete = async () => {
     try {
       const { error } = await supabase
@@ -85,12 +39,10 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       setIsCompleted(true);
       
-      // Vérifier et compléter les quêtes si nécessaire
-      await checkAndCompleteQuests();
-      
-      // Invalider les queries pour rafraîchir l'XP
+      // Invalider les queries pour rafraîchir l'XP et les streaks
       queryClient.invalidateQueries({ queryKey: ["todayXP"] });
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
+      queryClient.invalidateQueries({ queryKey: ["userStreak"] });
 
       toast({
         title: "Bravo !",
