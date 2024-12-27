@@ -29,18 +29,7 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
       {habits?.map((habit) => (
         <HabitCard key={habit.id} habit={habit} />
       ))}
-      <AddHabitDialog
-        trigger={
-          <button className="h-full min-h-[200px] rounded-xl border-2 border-dashed border-gray-200 hover:border-primary hover:bg-primary/5 transition-all duration-300 flex flex-col items-center justify-center gap-4 group">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-              <Plus className="w-8 h-8 text-primary" />
-            </div>
-            <p className="text-lg font-medium text-gray-500 group-hover:text-primary transition-colors">
-              Nouvelle Habitude
-            </p>
-          </button>
-        }
-      />
+      <AddHabitDialog />
     </div>
   );
 };
