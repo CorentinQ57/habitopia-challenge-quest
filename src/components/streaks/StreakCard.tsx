@@ -14,10 +14,14 @@ export const StreakCard = () => {
   const { data: streak } = useQuery({
     queryKey: ["userStreak"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       // First try to get the most recent streak
       const { data: streaks, error: fetchError } = await supabase
         .from("user_streaks")
         .select("*")
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -30,6 +34,7 @@ export const StreakCard = () => {
         const { data: newStreak, error: createError } = await supabase
           .from("user_streaks")
           .insert([{
+            user_id: user.id,
             current_streak: 0,
             longest_streak: 0,
             tasks_completed_today: 0,
@@ -44,34 +49,7 @@ export const StreakCard = () => {
         return newStreak;
       }
 
-      const currentStreak = streaks[0];
-      
-      // Reset streak if a day was missed (unless frozen)
-      const lastActivityDate = new Date(currentStreak.last_activity_date);
-      const todayDate = new Date(today);
-      const daysDifference = Math.floor((todayDate.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (daysDifference > 1 && currentStreak.freeze_used_date !== today) {
-        const { error: resetError } = await supabase
-          .from("user_streaks")
-          .update({
-            current_streak: 0,
-            tasks_completed_today: 0,
-            last_activity_date: today
-          })
-          .eq("id", currentStreak.id);
-
-        if (resetError) throw resetError;
-        
-        return {
-          ...currentStreak,
-          current_streak: 0,
-          tasks_completed_today: 0,
-          last_activity_date: today
-        };
-      }
-
-      return currentStreak;
+      return streaks[0];
     },
   });
 
@@ -95,7 +73,8 @@ export const StreakCard = () => {
           freeze_tokens: streak.freeze_tokens - 1,
           freeze_used_date: new Date().toISOString().split('T')[0]
         })
-        .eq("id", streak.id);
+        .eq("id", streak.id)
+        .eq("user_id", streak.user_id);
 
       if (error) throw error;
 
