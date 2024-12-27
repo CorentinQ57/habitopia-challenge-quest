@@ -22,6 +22,8 @@ export const StreakCard = () => {
 
       if (fetchError) throw fetchError;
 
+      const today = new Date().toISOString().split('T')[0];
+
       // If no streak exists, create one
       if (!streaks || streaks.length === 0) {
         const { data: newStreak, error: createError } = await supabase
@@ -30,7 +32,7 @@ export const StreakCard = () => {
             current_streak: 0,
             longest_streak: 0,
             tasks_completed_today: 0,
-            last_activity_date: new Date().toISOString().split('T')[0],
+            last_activity_date: today,
             freeze_tokens: 0,
             freeze_used_date: null
           }])
@@ -41,8 +43,64 @@ export const StreakCard = () => {
         return newStreak;
       }
 
-      // Return the first streak found
-      return streaks[0];
+      const currentStreak = streaks[0];
+      
+      // Check if we need to update the streak based on completed tasks
+      if (currentStreak.tasks_completed_today >= 3) {
+        const lastActivityDate = new Date(currentStreak.last_activity_date);
+        const todayDate = new Date(today);
+        
+        // If last activity was yesterday, increment streak
+        if (lastActivityDate.getTime() === todayDate.getTime()) {
+          const newCurrentStreak = currentStreak.current_streak + 1;
+          const newLongestStreak = Math.max(newCurrentStreak, currentStreak.longest_streak);
+          
+          const { error: updateError } = await supabase
+            .from("user_streaks")
+            .update({
+              current_streak: newCurrentStreak,
+              longest_streak: newLongestStreak,
+              last_activity_date: today
+            })
+            .eq("id", currentStreak.id);
+
+          if (updateError) throw updateError;
+          
+          return {
+            ...currentStreak,
+            current_streak: newCurrentStreak,
+            longest_streak: newLongestStreak,
+            last_activity_date: today
+          };
+        }
+      }
+
+      // Reset streak if a day was missed (unless frozen)
+      const lastActivityDate = new Date(currentStreak.last_activity_date);
+      const todayDate = new Date(today);
+      const daysDifference = Math.floor((todayDate.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDifference > 1 && currentStreak.freeze_used_date !== today) {
+        const { error: resetError } = await supabase
+          .from("user_streaks")
+          .update({
+            current_streak: 0,
+            tasks_completed_today: 0,
+            last_activity_date: today
+          })
+          .eq("id", currentStreak.id);
+
+        if (resetError) throw resetError;
+        
+        return {
+          ...currentStreak,
+          current_streak: 0,
+          tasks_completed_today: 0,
+          last_activity_date: today
+        };
+      }
+
+      return currentStreak;
     },
   });
 
