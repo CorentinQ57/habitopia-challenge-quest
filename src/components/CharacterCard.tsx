@@ -1,4 +1,4 @@
-import { UserRound, Award, Plus, Swords, Shield, Crown } from "lucide-react";
+import { UserRound, Award, Plus, Swords, Shield, Crown, Store } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -89,21 +89,10 @@ export const CharacterCard = () => {
           </div>
         </div>
 
-        <button className="w-full group relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl blur-md group-hover:blur-lg transition-all duration-300 opacity-75" />
-          <div className="relative bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl p-4 transform transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl border border-white/20">
-            <div className="aspect-[4/3] mb-4 overflow-hidden rounded-lg">
-              <img 
-                src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e" 
-                alt="Robot"
-                className="w-full h-full object-cover transform group-hover:scale-105 transition-all duration-300"
-              />
-            </div>
-            <div className="flex items-center justify-center gap-2 text-white font-semibold">
-              <Award className="w-5 h-5" />
-              <span>Boutique {totalXP || 0} XP</span>
-            </div>
-          </div>
+        <button className="w-full px-4 py-3 bg-primary rounded-xl flex items-center justify-center gap-2 font-medium hover:bg-primary/90 transition-colors">
+          <Store className="w-5 h-5" />
+          <span>Boutique</span>
+          <span className="font-semibold">{totalXP || 0} XP</span>
         </button>
       </div>
     </div>
