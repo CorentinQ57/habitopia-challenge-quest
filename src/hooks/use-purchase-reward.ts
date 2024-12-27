@@ -29,7 +29,24 @@ export const usePurchaseReward = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // 1. Déduire les points d'expérience d'abord
+      // 1. Vérifier si l'utilisateur possède déjà la récompense
+      const { data: existingReward } = await supabase
+        .from("user_rewards")
+        .select("id")
+        .eq("reward_id", reward.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingReward) {
+        toast({
+          title: "Récompense déjà possédée",
+          description: "Vous possédez déjà cette récompense !",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 2. Déduire les points d'expérience
       const { error: xpError } = await supabase
         .from("habit_logs")
         .insert([{
@@ -40,10 +57,15 @@ export const usePurchaseReward = () => {
 
       if (xpError) {
         console.error("Erreur lors de la déduction des points:", xpError);
-        throw xpError;
+        toast({
+          title: "Erreur",
+          description: "Impossible de déduire les points d'expérience.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      // 2. Ajouter la récompense à l'utilisateur
+      // 3. Ajouter la récompense à l'utilisateur
       const { error: purchaseError } = await supabase
         .from("user_rewards")
         .insert([{ 
@@ -51,9 +73,20 @@ export const usePurchaseReward = () => {
           user_id: user.id
         }]);
 
-      if (purchaseError) throw purchaseError;
+      if (purchaseError) {
+        // En cas d'erreur, on essaie de rembourser les points
+        await supabase
+          .from("habit_logs")
+          .insert([{
+            habit_id: null,
+            experience_gained: reward.cost,
+            notes: `Remboursement - Échec de l'achat: ${reward.title}`
+          }]);
 
-      // 3. Gérer le jeton de gel si applicable
+        throw purchaseError;
+      }
+
+      // 4. Gérer le jeton de gel si applicable
       if (reward.is_freeze_token) {
         const { data: streakData, error: streakError } = await supabase
           .from("user_streaks")
@@ -73,7 +106,7 @@ export const usePurchaseReward = () => {
         if (freezeError) throw freezeError;
       }
 
-      // 4. Invalider les requêtes pour mettre à jour l'interface
+      // 5. Invalider les requêtes pour mettre à jour l'interface
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
 
