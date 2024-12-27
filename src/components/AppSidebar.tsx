@@ -1,4 +1,4 @@
-import { LayoutDashboard, ListCheck, BarChart, UserRound, User } from "lucide-react";
+import { LayoutDashboard, ListCheck, BarChart, UserRound, LogOut } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -7,8 +7,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 const menuItems = [
   {
@@ -31,15 +37,46 @@ const menuItems = [
     url: "/personnage",
     icon: UserRound,
   },
-  {
-    title: "Profil",
-    url: "/profil",
-    icon: User,
-  },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return null;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate("/profil");
+      toast({
+        title: "Déconnexion réussie",
+        description: "À bientôt !",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de vous déconnecter.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Sidebar>
@@ -90,6 +127,36 @@ export function AppSidebar() {
           </div>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="border-t border-gray-200/50">
+        <div className="p-4">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+              <AvatarImage src={profile?.avatar_url} />
+              <AvatarFallback className="bg-stella-royal text-white">
+                {profile?.username?.charAt(0)?.toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-700 truncate">
+                {profile?.username || "Utilisateur"}
+              </p>
+              <p className="text-xs text-gray-500 truncate">
+                {profile?.email}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSignOut}
+              className="h-8 w-8 text-gray-500 hover:text-destructive hover:bg-destructive/10"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="sr-only">Se déconnecter</span>
+            </Button>
+          </div>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }
