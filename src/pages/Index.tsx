@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { HabitGrid } from "@/components/HabitGrid";
 import { CharacterCard } from "@/components/CharacterCard";
 import { RewardShop } from "@/components/RewardShop";
+import { StatsSection } from "@/components/stats/StatsSection";
 
 const Index = () => {
   const { data: habits, isLoading } = useQuery({
@@ -32,6 +33,7 @@ const Index = () => {
             <RewardShop />
           </div>
         </div>
+        <StatsSection />
       </div>
     </div>
   );
