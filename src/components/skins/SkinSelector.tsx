@@ -22,11 +22,10 @@ export const SkinSelector = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
             preview_url,
             type
           )
-        `)
-        .eq("is_active", false);
+        `);
       
       if (error) throw error;
-      // Filter to only show character skins
+      // Filter to only show character skins that have been purchased
       return data?.filter(userSkin => userSkin.skin.type === 'character') || [];
     },
   });
