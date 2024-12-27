@@ -61,6 +61,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
         const shouldIncrementStreak = tasksCompletedToday === 3 && 
           existingStreak.last_activity_date !== today;
 
+        // Si on a déjà validé 3 tâches aujourd'hui, on ne doit pas incrémenter la streak
         const newCurrentStreak = shouldIncrementStreak 
           ? existingStreak.current_streak + 1 
           : existingStreak.current_streak;

@@ -46,36 +46,6 @@ export const StreakCard = () => {
 
       const currentStreak = streaks[0];
       
-      // Check if we need to update the streak based on completed tasks
-      if (currentStreak.tasks_completed_today >= 3) {
-        const lastActivityDate = new Date(currentStreak.last_activity_date);
-        const todayDate = new Date(today);
-        
-        // If last activity was today, increment streak
-        if (lastActivityDate.getTime() === todayDate.getTime()) {
-          const newCurrentStreak = currentStreak.current_streak + 1;
-          const newLongestStreak = Math.max(newCurrentStreak, currentStreak.longest_streak);
-          
-          const { error: updateError } = await supabase
-            .from("user_streaks")
-            .update({
-              current_streak: newCurrentStreak,
-              longest_streak: newLongestStreak,
-              last_activity_date: today
-            })
-            .eq("id", currentStreak.id);
-
-          if (updateError) throw updateError;
-          
-          return {
-            ...currentStreak,
-            current_streak: newCurrentStreak,
-            longest_streak: newLongestStreak,
-            last_activity_date: today
-          };
-        }
-      }
-
       // Reset streak if a day was missed (unless frozen)
       const lastActivityDate = new Date(currentStreak.last_activity_date);
       const todayDate = new Date(today);
@@ -107,6 +77,16 @@ export const StreakCard = () => {
 
   const useFreeze = async () => {
     if (!streak || streak.freeze_tokens <= 0) return;
+
+    // Vérifier si la série du jour a déjà été validée
+    if (streak.last_activity_date === new Date().toISOString().split('T')[0]) {
+      toast({
+        title: "Action impossible",
+        description: "Vous avez déjà validé votre série aujourd'hui.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const { error } = await supabase
