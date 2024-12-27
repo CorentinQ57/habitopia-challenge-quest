@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,40 @@ export const SkinCard = ({ skin, canPurchase }: SkinCardProps) => {
   const queryClient = useQueryClient();
   const [isPurchasing, setIsPurchasing] = useState(false);
 
+  // Check if the skin is already purchased
+  const { data: isOwned } = useQuery({
+    queryKey: ["skinOwnership", skin.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_skins")
+        .select("id")
+        .eq("skin_id", skin.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return !!data;
+    },
+  });
+
   const purchaseSkin = async () => {
     try {
       setIsPurchasing(true);
+
+      // Double check if skin is already owned before purchase
+      const { data: existingPurchase } = await supabase
+        .from("user_skins")
+        .select("id")
+        .eq("skin_id", skin.id)
+        .maybeSingle();
+
+      if (existingPurchase) {
+        toast({
+          title: "Skin déjà possédé",
+          description: "Vous possédez déjà ce skin !",
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Insérer l'achat du skin
       const { error: purchaseError } = await supabase
@@ -50,6 +81,7 @@ export const SkinCard = ({ skin, canPurchase }: SkinCardProps) => {
       // Rafraîchir les données
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userSkins"] });
+      queryClient.invalidateQueries({ queryKey: ["skinOwnership", skin.id] });
 
       toast({
         title: "Skin débloqué !",
@@ -94,16 +126,19 @@ export const SkinCard = ({ skin, canPurchase }: SkinCardProps) => {
 
         <Button
           onClick={purchaseSkin}
-          disabled={!canPurchase || isPurchasing}
-          variant={canPurchase ? "default" : "outline"}
+          disabled={!canPurchase || isPurchasing || isOwned}
+          variant={isOwned ? "secondary" : canPurchase ? "default" : "outline"}
           className="w-full"
         >
-          {canPurchase ? (
-            isPurchasing ? (
-              "Achat en cours..."
-            ) : (
-              "Acheter"
-            )
+          {isOwned ? (
+            <span className="flex items-center gap-2">
+              <Check className="w-4 h-4" />
+              Déjà possédé
+            </span>
+          ) : isPurchasing ? (
+            "Achat en cours..."
+          ) : canPurchase ? (
+            "Acheter"
           ) : (
             "Points insuffisants"
           )}
