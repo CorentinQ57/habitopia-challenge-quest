@@ -37,7 +37,7 @@ export const ThemeSelector = () => {
         .eq("skin.type", "theme");
       
       if (error) throw error;
-      return data;
+      return data?.filter(item => item.skin) || [];
     },
   });
 
@@ -75,7 +75,9 @@ export const ThemeSelector = () => {
     },
   });
 
-  const activeTheme = userSkins?.find(skin => skin.skin.type === "theme")?.skin_id;
+  // Find the active theme, safely accessing the skin property
+  const activeTheme = userSkins?.find(item => item.skin?.type === "theme")?.skin_id;
+
   const defaultTheme = {
     id: "default",
     title: "Thème par défaut",
@@ -90,9 +92,10 @@ export const ThemeSelector = () => {
     updateThemeMutation.mutate(value);
   };
 
+  // Filter out any items where skin is undefined
   const availableThemes = [
     defaultTheme,
-    ...(purchasedThemes?.map(({ skin }) => skin) || []),
+    ...(purchasedThemes?.map(({ skin }) => skin).filter(Boolean) || []),
   ];
 
   return (
