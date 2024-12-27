@@ -5,11 +5,10 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload } from "lucide-react";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { ProfileForm } from "@/components/profile/ProfileForm";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -33,7 +32,7 @@ const Profile = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const { data: profile, refetch: refetchProfile } = useQuery({
+  const { refetch: refetchProfile } = useQuery({
     queryKey: ["profile", session?.user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -79,41 +78,6 @@ const Profile = () => {
     }
   };
 
-  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      setLoading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${session?.user?.id}/${crypto.randomUUID()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
-
-      setAvatarUrl(publicUrl);
-      toast({
-        title: "Avatar téléchargé",
-        description: "Votre avatar a été mis à jour avec succès.",
-      });
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de télécharger l'avatar.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/");
@@ -146,80 +110,29 @@ const Profile = () => {
           <CardTitle>Mon Profil</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-col items-center gap-4">
-            <Avatar className="w-24 h-24">
-              <AvatarImage src={avatarUrl} />
-              <AvatarFallback>
-                {username?.charAt(0)?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex items-center gap-2">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={uploadAvatar}
-                className="hidden"
-                id="avatar-upload"
-                disabled={loading}
-              />
-              <Button
-                variant="outline"
-                onClick={() => document.getElementById("avatar-upload")?.click()}
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Upload className="w-4 h-4" />
-                )}
-                Changer l'avatar
-              </Button>
-            </div>
-          </div>
+          <ProfileAvatar
+            username={username}
+            avatarUrl={avatarUrl}
+            onAvatarChange={setAvatarUrl}
+          />
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={session.user.email}
-                disabled
-              />
-            </div>
+          <ProfileForm
+            username={username}
+            email={session.user.email}
+            onUsernameChange={setUsername}
+            onSave={updateProfile}
+            loading={loading}
+          />
 
-            <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium">
-                Nom d'utilisateur
-              </label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Entrez votre nom d'utilisateur"
-              />
-            </div>
-
-            <div className="flex justify-between pt-4">
-              <Button
-                variant="outline"
-                onClick={handleSignOut}
-                disabled={loading}
-              >
-                Déconnexion
-              </Button>
-              <Button
-                onClick={updateProfile}
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
-                Enregistrer
-              </Button>
-            </div>
+          <div className="pt-4">
+            <Button
+              variant="outline"
+              onClick={handleSignOut}
+              disabled={loading}
+              className="w-full"
+            >
+              Déconnexion
+            </Button>
           </div>
         </CardContent>
       </Card>
