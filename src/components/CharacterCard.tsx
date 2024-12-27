@@ -49,9 +49,9 @@ export const CharacterCard = () => {
           )
         `)
         .eq("is_active", true)
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== "PGRST116") throw error;
+      if (error) throw error;
       return data;
     },
   });
@@ -81,7 +81,7 @@ export const CharacterCard = () => {
           <div className="relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-lg group-hover:blur-xl transition-all duration-300 opacity-75" />
             <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center border-4 border-white/20 shadow-lg transform group-hover:scale-105 transition-all duration-300 overflow-hidden">
-              {activeSkin?.skin.preview_url ? (
+              {activeSkin?.skin?.preview_url ? (
                 <img 
                   src={activeSkin.skin.preview_url} 
                   alt={activeSkin.skin.title}
