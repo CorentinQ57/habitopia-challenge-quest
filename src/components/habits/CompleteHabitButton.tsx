@@ -11,12 +11,20 @@ export const CompleteHabitButton = ({
   isCompleted,
   onClick,
 }: CompleteHabitButtonProps) => {
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!isCompleted) {
+      const button = e.currentTarget;
+      const rect = button.getBoundingClientRect();
+      const buttonCenterX = rect.left + rect.width / 2;
+      const buttonCenterY = rect.top + rect.height / 2;
+      
+      const x = buttonCenterX / window.innerWidth;
+      const y = buttonCenterY / window.innerHeight;
+      
       confetti({
         particleCount: 100,
         spread: 70,
-        origin: { y: 0.8 }
+        origin: { x, y }
       });
     }
     onClick();
@@ -26,7 +34,7 @@ export const CompleteHabitButton = ({
     <button
       onClick={handleClick}
       className={cn(
-        "px-4 py-2 rounded-lg transition-all duration-200",
+        "w-full h-12 rounded-lg transition-all duration-200",
         "flex items-center justify-center gap-2 font-medium",
         "transform hover:-translate-y-1 active:translate-y-0",
         isCompleted 
