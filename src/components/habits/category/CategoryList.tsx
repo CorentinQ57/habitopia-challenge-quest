@@ -98,10 +98,12 @@ export const CategoryList = ({ categories, onUpdate }: CategoryListProps) => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-destructive hover:text-destructive"
                 onClick={() => handleDelete(category.id)}
+                className="relative transition-all duration-300 hover:bg-white hover:shadow-[0_4px_0_rgb(63,43,150)] active:shadow-none active:translate-y-1 group"
               >
-                Supprimer
+                <span className="relative z-10 group-hover:bg-gradient-to-r group-hover:from-[#a8c0ff] group-hover:to-[#3f2b96] group-hover:bg-clip-text group-hover:text-transparent">
+                  Supprimer
+                </span>
               </Button>
             </div>
           )}
