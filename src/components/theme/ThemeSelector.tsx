@@ -6,6 +6,26 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
+interface ThemeColors {
+  primary: string;
+  secondary: string;
+  accent: string;
+  background: string;
+}
+
+interface Theme {
+  id: string;
+  title: string;
+  theme_colors: ThemeColors;
+}
+
+interface UserSkin {
+  id: string;
+  skin_id: string;
+  is_active: boolean;
+  skin: Theme;
+}
+
 export const ThemeSelector = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -31,7 +51,7 @@ export const ThemeSelector = () => {
         .single();
       
       if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      return data as UserSkin;
     },
   });
 
@@ -53,7 +73,7 @@ export const ThemeSelector = () => {
         .eq("skin.type", "theme");
       
       if (error) throw error;
-      return data?.filter(item => item.skin) || [];
+      return (data?.filter(item => item.skin) || []) as UserSkin[];
     },
   });
 
@@ -91,7 +111,7 @@ export const ThemeSelector = () => {
     },
   });
 
-  const defaultTheme = {
+  const defaultTheme: Theme = {
     id: "default",
     title: "Thème par défaut",
     theme_colors: {
@@ -103,7 +123,7 @@ export const ThemeSelector = () => {
   };
 
   useEffect(() => {
-    const theme = activeTheme?.skin?.theme_colors;
+    const theme = activeTheme?.skin?.theme_colors as ThemeColors | undefined;
     if (theme) {
       document.documentElement.style.setProperty('--theme-primary', theme.primary);
       document.documentElement.style.setProperty('--theme-secondary', theme.secondary);
