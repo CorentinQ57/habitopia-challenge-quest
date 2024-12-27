@@ -95,11 +95,17 @@ export const CharacterCard = () => {
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-xl p-6 backdrop-blur-lg border border-white/20 shadow-xl animate-fade-in noise transform transition-transform hover:scale-[1.02] hover:-translate-y-1" 
+      <div 
+        className="relative overflow-hidden rounded-xl p-6 backdrop-blur-lg border border-white/20 shadow-xl animate-fade-in noise transition-all duration-500 ease-out
+          before:absolute before:inset-0 before:bg-gradient-to-br before:from-stella-royal/0 before:to-stella-purple/0 before:transition-colors before:duration-500
+          hover:before:from-stella-royal/10 hover:before:to-stella-purple/10
+          after:absolute after:inset-0 after:rounded-xl after:opacity-0 after:transition-opacity after:duration-500 after:bg-[radial-gradient(circle_at_50%_50%,rgba(65,105,225,0.4),transparent_60%)]
+          hover:after:opacity-100" 
         style={{
           background: 'linear-gradient(135deg, rgba(168, 192, 255, 0.9), rgba(63, 43, 150, 0.9))',
           boxShadow: '0 8px 32px rgba(63, 43, 150, 0.2)'
-        }}>
+        }}
+      >
         <div className="absolute top-0 left-0 w-full h-1 bg-stella-white/10 rounded-full overflow-hidden">
           <div 
             className="h-full transition-all duration-500 ease-out"
@@ -110,10 +116,10 @@ export const CharacterCard = () => {
           />
         </div>
         
-        <div className="flex flex-col items-center space-y-6">
+        <div className="flex flex-col items-center space-y-6 relative z-10">
           <div className="relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-stella-royal to-stella-purple rounded-full blur-lg group-hover:blur-xl transition-all duration-300 opacity-75" />
-            <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-stella-royal to-stella-purple flex items-center justify-center border-4 border-stella-white/20 shadow-lg transform group-hover:scale-105 transition-all duration-300 overflow-hidden">
+            <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-stella-royal to-stella-purple flex items-center justify-center border-4 border-stella-white/20 shadow-lg transition-transform duration-300 group-hover:translate-y-[-2px] overflow-hidden">
               {characterImage ? (
                 <img 
                   src={characterImage}
@@ -138,7 +144,7 @@ export const CharacterCard = () => {
             </h3>
             
             <div className="grid grid-cols-2 gap-8">
-              <div className="relative p-4 rounded-lg bg-stella-white/5 backdrop-blur-sm border border-stella-white/10 transform hover:scale-105 transition-all duration-300">
+              <div className="relative p-4 rounded-lg bg-stella-white/5 backdrop-blur-sm border border-stella-white/10 transition-transform duration-300 hover:translate-y-[-2px]">
                 <div className="absolute -top-3 -right-3">
                   <Award className="w-6 h-6 text-yellow-500" />
                 </div>
@@ -146,7 +152,7 @@ export const CharacterCard = () => {
                 <span className="text-xl font-bold text-stella-white">{totalXP || 0}</span>
               </div>
               
-              <div className="relative p-4 rounded-lg bg-stella-white/5 backdrop-blur-sm border border-stella-white/10 transform hover:scale-105 transition-all duration-300">
+              <div className="relative p-4 rounded-lg bg-stella-white/5 backdrop-blur-sm border border-stella-white/10 transition-transform duration-300 hover:translate-y-[-2px]">
                 <div className="absolute -top-3 -right-3">
                   <Plus className="w-6 h-6 text-green-500" />
                 </div>
