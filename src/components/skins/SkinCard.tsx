@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Gem, Check, Badge as BadgeIcon } from "lucide-react";
+import { Gem, BadgeIcon } from "lucide-react";
 
 interface SkinCardProps {
   skin: {
@@ -55,14 +55,15 @@ export const SkinCard = ({ skin, canPurchase }: SkinCardProps) => {
         return;
       }
 
-      const { data: existingPurchase } = await supabase
+      // Vérifier si l'utilisateur possède déjà le skin
+      const { data: existingSkin } = await supabase
         .from("user_skins")
         .select("id")
         .eq("skin_id", skin.id)
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (existingPurchase) {
+      if (existingSkin) {
         toast({
           title: "Skin déjà possédé",
           description: "Vous possédez déjà ce skin !",
@@ -71,26 +72,42 @@ export const SkinCard = ({ skin, canPurchase }: SkinCardProps) => {
         return;
       }
 
-      const { error: purchaseError } = await supabase
-        .from("user_skins")
-        .insert([{ 
-          skin_id: skin.id,
-          is_active: false,
-          user_id: user.id
-        }]);
-
-      if (purchaseError) throw purchaseError;
-
+      // Déduire les points d'expérience
       const { error: xpError } = await supabase
         .from("habit_logs")
         .insert([{
           habit_id: null,
           experience_gained: -skin.cost,
-          notes: `Achat du skin: ${skin.title}`
+          notes: `Achat du skin: ${skin.title}`,
+          user_id: user.id
         }]);
 
       if (xpError) throw xpError;
 
+      // Ajouter le skin à l'utilisateur
+      const { error: purchaseError } = await supabase
+        .from("user_skins")
+        .insert([{ 
+          skin_id: skin.id,
+          user_id: user.id,
+          is_active: false
+        }]);
+
+      if (purchaseError) {
+        // En cas d'erreur, rembourser les points
+        await supabase
+          .from("habit_logs")
+          .insert([{
+            habit_id: null,
+            experience_gained: skin.cost,
+            notes: `Remboursement - Échec de l'achat: ${skin.title}`,
+            user_id: user.id
+          }]);
+
+        throw purchaseError;
+      }
+
+      // Rafraîchir les données
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userSkins"] });
       queryClient.invalidateQueries({ queryKey: ["skinOwnership", skin.id] });
@@ -155,7 +172,7 @@ export const SkinCard = ({ skin, canPurchase }: SkinCardProps) => {
         >
           {isOwned ? (
             <span className="flex items-center gap-2">
-              <Check className="w-4 h-4" />
+              <BadgeIcon className="w-4 h-4" />
               Déjà possédé
             </span>
           ) : isPurchasing ? (
