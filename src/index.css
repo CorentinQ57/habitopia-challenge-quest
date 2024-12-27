@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&family=Nunito+Sans:wght@400;600;700&family=Poppins:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -33,25 +33,30 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased font-inter;
+    @apply bg-background text-foreground antialiased font-poppins;
     font-feature-settings: "rlig" 1, "calt" 1;
     background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234169E1' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-poppins tracking-tight;
+    @apply font-abril tracking-tight;
+    letter-spacing: -0.02em;
   }
 
   h1 {
-    @apply text-4xl font-bold text-stella-black tracking-normal;
+    @apply text-4xl font-normal text-stella-black tracking-normal;
   }
 
   h2 {
-    @apply text-3xl font-bold text-stella-black tracking-normal;
+    @apply text-3xl font-normal text-stella-black tracking-normal;
   }
 
   h3 {
-    @apply text-2xl font-semibold text-stella-black;
+    @apply text-2xl font-normal text-stella-black;
+  }
+
+  p {
+    @apply font-poppins tracking-tight;
   }
 
   .card {
@@ -83,8 +88,8 @@
   .gradient-card {
     @apply relative overflow-hidden;
     background: linear-gradient(135deg, 
-      rgba(168, 192, 255, 0.9),
-      rgba(63, 43, 150, 0.9)
+      #a8c0ff,
+      #3f2b96
     );
   }
 

@@ -53,19 +53,20 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         habit: {
-          success: "#A7F3D0", // On garde le vert
+          success: "#A7F3D0",
           warning: "#FDE68A",
-          danger: "#FDB4B4", // On garde le rouge
+          danger: "#FDB4B4",
           info: "#A0DFFF",
         },
         stella: {
           white: "#FFFFFF",
           black: "#000000",
-          royal: "#4169E1", // Royal Blue
-          purple: "#8A2BE2", // Vivid Purple
+          royal: "#4169E1",
+          purple: "#8A2BE2",
         },
       },
       fontFamily: {
+        abril: ["Abril Fatface", "serif"],
         poppins: ["Poppins", "sans-serif"],
         inter: ["Inter", "sans-serif"],
         nunito: ["Nunito Sans", "sans-serif"],
