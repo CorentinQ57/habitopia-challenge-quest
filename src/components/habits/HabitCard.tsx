@@ -67,6 +67,26 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
       if (!user) return;
 
       const today = new Date().toISOString().split('T')[0];
+
+      // Vérifier si un glaçon a été utilisé aujourd'hui
+      const { data: userStreak } = await supabase
+        .from("user_streaks")
+        .select("freeze_used_date, tasks_completed_today")
+        .eq("user_id", user.id)
+        .single();
+
+      const isStreakFrozen = userStreak?.freeze_used_date === today;
+
+      // Si un glaçon a été utilisé, on ne permet pas de descendre en dessous de 3 tâches
+      if (isStreakFrozen && userStreak.tasks_completed_today <= 3) {
+        toast({
+          title: "Action impossible",
+          description: "Vous ne pouvez pas annuler cette habitude car un glaçon a été utilisé aujourd'hui.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data: habitsCompleted } = await supabase
         .from("habit_logs")
         .select("id")
@@ -76,7 +96,10 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       const tasksCompletedToday = (habitsCompleted?.length || 1) - 1;
 
-      await updateUserStreak(tasksCompletedToday);
+      // Si un glaçon a été utilisé, on s'assure que tasks_completed_today ne descend pas en dessous de 3
+      if (!isStreakFrozen) {
+        await updateUserStreak(tasksCompletedToday);
+      }
 
       // Supprimer l'entrée du journal d'habitudes
       const { error: deleteError } = await supabase
@@ -154,7 +177,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       setIsCompleted(true);
       
-      // Invalider toutes les requêtes pertinentes
       queryClient.invalidateQueries({ queryKey: ["habitLogs"] });
       queryClient.invalidateQueries({ queryKey: ["todayXP"] });
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });

@@ -57,13 +57,12 @@ export const StreakCard = () => {
     if (!streak || streak.freeze_tokens <= 0) return;
 
     const today = new Date().toISOString().split('T')[0];
-    const lastActivityDate = new Date(streak.last_activity_date).toISOString().split('T')[0];
 
-    // Vérifier si la série du jour a déjà été validée
-    if (lastActivityDate === today && streak.tasks_completed_today >= 3) {
+    // Si le glaçon a déjà été utilisé aujourd'hui, on ne fait rien
+    if (streak.freeze_used_date === today) {
       toast({
         title: "Action impossible",
-        description: "Vous avez déjà validé votre série aujourd'hui.",
+        description: "Vous avez déjà utilisé un glaçon aujourd'hui.",
         variant: "destructive",
       });
       return;
@@ -78,7 +77,7 @@ export const StreakCard = () => {
           freeze_used_date: today,
           current_streak: streak.current_streak + 1,
           longest_streak: Math.max(streak.longest_streak, streak.current_streak + 1),
-          tasks_completed_today: 3 // On considère que le glaçon valide la journée
+          tasks_completed_today: Math.max(streak.tasks_completed_today, 3) // On garde le max entre la valeur actuelle et 3
         })
         .eq("id", streak.id)
         .eq("user_id", streak.user_id);
