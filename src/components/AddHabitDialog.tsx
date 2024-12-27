@@ -11,16 +11,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
 const categories = [
-  { value: "Health", label: "Health" },
-  { value: "Wellness", label: "Wellness" },
-  { value: "Learning", label: "Learning" },
-  { value: "Productivity", label: "Productivity" },
-];
-
-const frequencies = [
-  { value: "daily", label: "Daily" },
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
+  { value: "Health", label: "Santé" },
+  { value: "Wellness", label: "Bien-être" },
+  { value: "Learning", label: "Apprentissage" },
+  { value: "Productivity", label: "Productivité" },
 ];
 
 export const AddHabitDialog = () => {
@@ -38,7 +32,7 @@ export const AddHabitDialog = () => {
       title: formData.get("title") as string,
       description: formData.get("description") as string,
       category: formData.get("category") as string,
-      frequency: formData.get("frequency") as string,
+      experience_points: parseInt(formData.get("experience_points") as string) || 10,
     };
 
     try {
@@ -47,16 +41,16 @@ export const AddHabitDialog = () => {
       if (error) throw error;
 
       toast({
-        title: "Success!",
-        description: "New habit created successfully.",
+        title: "Succès !",
+        description: "Nouvelle habitude créée avec succès.",
       });
       
       queryClient.invalidateQueries({ queryKey: ["habits"] });
       setOpen(false);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to create habit. Please try again.",
+        title: "Erreur",
+        description: "Impossible de créer l'habitude. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
@@ -69,16 +63,16 @@ export const AddHabitDialog = () => {
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2 bg-habit-warning/20 hover:bg-habit-warning/30 border-0">
           <Plus className="w-4 h-4" />
-          New Habit
+          Nouvelle Habitude
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Habit</DialogTitle>
+          <DialogTitle>Créer une nouvelle habitude</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">Titre</Label>
             <Input id="title" name="title" required />
           </div>
           <div className="space-y-2">
@@ -86,10 +80,10 @@ export const AddHabitDialog = () => {
             <Textarea id="description" name="description" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category">Catégorie</Label>
             <Select name="category" required>
               <SelectTrigger>
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="Sélectionner une catégorie" />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((category) => (
@@ -101,22 +95,18 @@ export const AddHabitDialog = () => {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="frequency">Frequency</Label>
-            <Select name="frequency" required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select frequency" />
-              </SelectTrigger>
-              <SelectContent>
-                {frequencies.map((frequency) => (
-                  <SelectItem key={frequency.value} value={frequency.value}>
-                    {frequency.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="experience_points">Points d'expérience</Label>
+            <Input 
+              id="experience_points" 
+              name="experience_points" 
+              type="number" 
+              defaultValue="10"
+              min="1"
+              required 
+            />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating..." : "Create Habit"}
+            {loading ? "Création..." : "Créer l'habitude"}
           </Button>
         </form>
       </DialogContent>

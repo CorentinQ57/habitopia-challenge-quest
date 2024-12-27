@@ -12,6 +12,7 @@ export type Database = {
       habit_logs: {
         Row: {
           completed_at: string
+          experience_gained: number
           habit_id: string | null
           id: string
           notes: string | null
@@ -19,6 +20,7 @@ export type Database = {
         }
         Insert: {
           completed_at?: string
+          experience_gained?: number
           habit_id?: string | null
           id?: string
           notes?: string | null
@@ -26,6 +28,7 @@ export type Database = {
         }
         Update: {
           completed_at?: string
+          experience_gained?: number
           habit_id?: string | null
           id?: string
           notes?: string | null
@@ -46,7 +49,7 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
-          frequency: string
+          experience_points: number
           icon: string | null
           id: string
           is_popular: boolean | null
@@ -56,7 +59,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
-          frequency: string
+          experience_points?: number
           icon?: string | null
           id?: string
           is_popular?: boolean | null
@@ -66,7 +69,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
-          frequency?: string
+          experience_points?: number
           icon?: string | null
           id?: string
           is_popular?: boolean | null
