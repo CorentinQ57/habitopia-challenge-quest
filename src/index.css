@@ -74,11 +74,12 @@
 
   /* Styles spécifiques au sidebar */
   [data-sidebar="sidebar"] {
-    @apply bg-white/80 backdrop-blur-md border-r border-stella-black/10;
+    @apply bg-gray-50/95 backdrop-blur-md border-r border-gray-200/50;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.03);
   }
 
-  [data-sidebar="menu-button"][data-active="true"] {
-    @apply relative;
+  [data-sidebar="menu-button"] {
+    @apply relative transition-all duration-300;
   }
 
   [data-sidebar="menu-button"][data-active="true"]::before {
@@ -88,5 +89,18 @@
 
   [data-sidebar="menu-button"][data-active="true"] .group {
     @apply shadow-lg shadow-stella-purple/20;
+  }
+
+  [data-sidebar="group-label"] {
+    @apply px-4 text-sm font-medium text-gray-500/80;
+  }
+
+  [data-sidebar="menu"] {
+    @apply space-y-1 px-2;
+  }
+
+  /* Animation pour le tooltip */
+  [data-sidebar="tooltip"] {
+    @apply animate-in fade-in zoom-in-95 duration-200;
   }
 }

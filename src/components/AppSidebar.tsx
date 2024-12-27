@@ -3,7 +3,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
-  SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
@@ -46,8 +45,8 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-stella-black/70">Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupLabel className="text-sm font-medium text-gray-500/80">Menu</SidebarGroupLabel>
+          <div className="mt-2">
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
@@ -59,13 +58,28 @@ export function AppSidebar() {
                   >
                     <Link 
                       to={item.url} 
-                      className="flex items-center gap-3 relative"
+                      className="flex items-center gap-3 relative p-2"
                     >
-                      <div className="relative flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-stella-royal to-stella-purple group-hover:shadow-lg group-hover:shadow-stella-purple/20 transition-all duration-300">
-                        <item.icon className="h-5 w-5 text-stella-white" />
-                        <div className="absolute inset-0 bg-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className={`
+                        relative flex items-center justify-center w-10 h-10 
+                        rounded-xl bg-white/80 backdrop-blur-sm
+                        group-hover:bg-white group-hover:shadow-md
+                        transition-all duration-300
+                        ${location.pathname === item.url ? 'shadow-md bg-white' : ''}
+                      `}>
+                        <item.icon className={`
+                          h-5 w-5 transition-colors duration-300
+                          ${location.pathname === item.url 
+                            ? 'text-stella-royal' 
+                            : 'text-gray-600 group-hover:text-stella-royal'}
+                        `} />
                       </div>
-                      <span className="text-stella-black/80 group-hover:text-stella-black font-medium transition-colors">
+                      <span className={`
+                        font-medium transition-colors duration-300
+                        ${location.pathname === item.url 
+                          ? 'text-stella-royal' 
+                          : 'text-gray-600 group-hover:text-stella-royal'}
+                      `}>
                         {item.title}
                       </span>
                     </Link>
@@ -73,7 +87,7 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
-          </SidebarGroupContent>
+          </div>
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
