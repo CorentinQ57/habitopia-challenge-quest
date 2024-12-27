@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import Dashboard from "./pages/Dashboard";
 import Habits from "./pages/Habits";
 import Statistics from "./pages/Statistics";
+import Character from "./pages/Character";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +28,7 @@ const App = () => (
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/habitudes" element={<Habits />} />
                   <Route path="/statistiques" element={<Statistics />} />
-                  <Route path="/personnage" element={<Dashboard />} />
+                  <Route path="/personnage" element={<Character />} />
                   <Route path="/profil" element={<Dashboard />} />
                 </Routes>
               </div>
