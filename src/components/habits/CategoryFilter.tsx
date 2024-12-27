@@ -30,6 +30,33 @@ export const CategoryFilter = ({ selectedCategory, onCategoryChange }: CategoryF
 
   if (!categories) return null;
 
+  const getContrastColor = (hexColor: string) => {
+    // Convert hex to RGB
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+    
+    // Calculate relative luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return black for light colors, white for dark colors
+    return luminance > 0.5 ? "#000000" : "#FFFFFF";
+  };
+
+  const getCategoryStyles = (color: string) => {
+    const textColor = getContrastColor(color);
+    const baseColor = color + "40"; // 25% opacity for base
+    const hoverColor = color + "60"; // 37.5% opacity for hover
+    const activeColor = color + "80"; // 50% opacity for active/selected
+
+    return {
+      color: textColor,
+      backgroundColor: baseColor,
+      "--hover-bg": hoverColor,
+      "--active-bg": activeColor,
+    } as React.CSSProperties;
+  };
+
   return (
     <div className="flex flex-wrap gap-2">
       <Button
@@ -49,16 +76,11 @@ export const CategoryFilter = ({ selectedCategory, onCategoryChange }: CategoryF
           variant="outline"
           onClick={() => onCategoryChange(category.name)}
           className={cn(
-            "backdrop-blur-sm border-gray-200/50",
+            "backdrop-blur-sm border-gray-200/50 transition-colors",
             selectedCategory === category.name ? "ring-2 ring-offset-2 ring-stella-royal/20" : "",
-            `text-[${category.color}] bg-[${category.color}]/10 hover:bg-[${category.color}]/20`
+            "hover:bg-[var(--hover-bg)]"
           )}
-          style={{
-            // Fallback inline styles in case Tailwind doesn't compile the dynamic colors
-            color: category.color,
-            backgroundColor: `${category.color}10`,
-            ['--tw-hover-bg-opacity']: '0.2',
-          }}
+          style={getCategoryStyles(category.color)}
         >
           {category.name}
         </Button>
