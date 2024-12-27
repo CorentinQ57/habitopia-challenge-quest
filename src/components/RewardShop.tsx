@@ -140,8 +140,12 @@ export const RewardShop = () => {
     <Sheet>
       <SheetTrigger asChild>
         <Button
-          className="group relative overflow-hidden bg-gradient-to-br from-stella-black via-stella-royal to-stella-purple shadow-lg hover:shadow-stella-purple/50 transition-all duration-300 animate-bounce-scale border-b-4 border-stella-purple/20 active:border-b-0 active:translate-y-1 w-full"
+          className="group relative overflow-hidden shadow-lg transition-all duration-300 animate-bounce-scale border-b-4 border-[#3f2b96]/20 active:border-b-0 active:translate-y-1 w-full"
           size="lg"
+          style={{
+            background: 'linear-gradient(135deg, #a8c0ff, #3f2b96)',
+            boxShadow: '0 4px 15px rgba(63, 43, 150, 0.3)'
+          }}
         >
           <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-colors" />
           <span className="relative flex items-center gap-2 text-stella-white">

@@ -95,11 +95,18 @@ export const CharacterCard = () => {
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-stella-black/80 via-stella-royal/80 to-stella-purple/80 p-6 backdrop-blur-lg border border-white/20 shadow-xl animate-fade-in noise">
+      <div className="relative overflow-hidden rounded-xl p-6 backdrop-blur-lg border border-white/20 shadow-xl animate-fade-in noise transform transition-transform hover:scale-[1.02] hover:-translate-y-1" 
+        style={{
+          background: 'linear-gradient(135deg, rgba(168, 192, 255, 0.9), rgba(63, 43, 150, 0.9))',
+          boxShadow: '0 8px 32px rgba(63, 43, 150, 0.2)'
+        }}>
         <div className="absolute top-0 left-0 w-full h-1 bg-stella-white/10 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-stella-royal/90 to-stella-purple/90 transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
+            className="h-full transition-all duration-500 ease-out"
+            style={{ 
+              width: `${progress}%`,
+              background: 'linear-gradient(to right, #a8c0ff, #3f2b96)'
+            }}
           />
         </div>
         
