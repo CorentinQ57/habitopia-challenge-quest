@@ -151,7 +151,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
     <>
       <Card 
         className={`group relative transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col min-h-[220px]
-          ${isCompleted ? 'bg-habit-success/20' hover:bg-habit-success/30' : 'hover:bg-white'}`}
+          ${isCompleted ? 'bg-habit-success/20 hover:bg-habit-success/30' : 'hover:bg-white'}`}
         style={{
           boxShadow: isCompleted 
             ? "0 8px 32px 0 rgba(167, 243, 208, 0.2)"
