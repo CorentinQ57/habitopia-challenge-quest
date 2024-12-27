@@ -74,7 +74,9 @@ export const RewardCard = ({ reward, totalXP, getLevelIcon, getLevelColor }: Rew
 
       if (error) throw error;
 
+      // Invalider à la fois la liste des récompenses et le statut de possession
       queryClient.invalidateQueries({ queryKey: ["rewards"] });
+      queryClient.invalidateQueries({ queryKey: ["rewardOwnership", reward.id] });
       
       toast({
         title: "Récompense supprimée",
