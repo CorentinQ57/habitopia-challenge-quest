@@ -10,6 +10,7 @@ import Habits from "./pages/Habits";
 import Statistics from "./pages/Statistics";
 import Character from "./pages/Character";
 import Profile from "./pages/Profile";
+import RewardManagement from "./pages/RewardManagement";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 
@@ -80,6 +81,16 @@ const App = () => {
                       element={
                         session ? (
                           <Character />
+                        ) : (
+                          <Navigate to="/profil" replace />
+                        )
+                      }
+                    />
+                    <Route
+                      path="/recompenses"
+                      element={
+                        session ? (
+                          <RewardManagement />
                         ) : (
                           <Navigate to="/profil" replace />
                         )
