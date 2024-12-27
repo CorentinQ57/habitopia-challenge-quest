@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Gem } from "lucide-react";
+import { Gem, Check } from "lucide-react";
 
 interface SkinCardProps {
   skin: {
