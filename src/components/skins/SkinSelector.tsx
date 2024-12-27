@@ -35,11 +35,11 @@ export const SkinSelector = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     try {
       setIsUpdating(true);
 
-      // Désactiver tous les skins
+      // Désactiver tous les skins sans condition
       const { error: deactivateError } = await supabase
         .from("user_skins")
         .update({ is_active: false })
-        .neq("id", "none");
+        .not('id', 'is', null); // This ensures we update all rows
 
       if (deactivateError) throw deactivateError;
 
