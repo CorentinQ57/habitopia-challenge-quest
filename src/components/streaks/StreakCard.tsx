@@ -24,7 +24,9 @@ export const StreakCard = () => {
       if (!existingStreak) {
         const { data: newStreak, error: createError } = await supabase
           .from("user_streaks")
-          .insert([{}])
+          .insert([{
+            freeze_used_date: null
+          }])
           .select()
           .single();
 
@@ -44,7 +46,7 @@ export const StreakCard = () => {
         .from("user_streaks")
         .update({ 
           freeze_tokens: streak.freeze_tokens - 1,
-          last_activity_date: new Date().toISOString().split('T')[0]
+          freeze_used_date: new Date().toISOString().split('T')[0]
         })
         .eq("id", streak.id);
 
@@ -67,8 +69,7 @@ export const StreakCard = () => {
 
   if (!streak) return null;
 
-  const isStreakFrozen = streak.last_activity_date === new Date().toISOString().split('T')[0] && 
-                        streak.tasks_completed_today === 0;
+  const isStreakFrozen = streak.freeze_used_date === new Date().toISOString().split('T')[0];
 
   return (
     <Card className={cn(
