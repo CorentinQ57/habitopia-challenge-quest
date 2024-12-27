@@ -55,13 +55,15 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="neo-card animate-pulse">
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-1/2 bg-muted/20" />
-              <Skeleton className="h-4 w-3/4 bg-muted/20" />
-              <Skeleton className="h-20 w-full bg-muted/20" />
-            </div>
-          </div>
+          <Card key={i} className="animate-pulse">
+            <CardHeader className="space-y-2">
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-3/4" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+          </Card>
         ))}
       </div>
     );
@@ -77,42 +79,62 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
     return translations[category] || category;
   };
 
+  const getCategoryColor = (category: string): string => {
+    const colors: { [key: string]: string } = {
+      "Health": "text-emerald-600 bg-emerald-50",
+      "Wellness": "text-blue-600 bg-blue-50",
+      "Learning": "text-purple-600 bg-purple-50",
+      "Productivity": "text-orange-600 bg-orange-50"
+    };
+    return colors[category] || "text-gray-600 bg-gray-50";
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {habits?.map((habit) => (
-        <div 
+        <Card 
           key={habit.id}
-          className="neo-card group flex flex-col min-h-[200px] backdrop-blur-sm"
+          className="group hover:shadow-lg transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col min-h-[200px]"
+          style={{
+            boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+          }}
         >
-          <div className="flex-grow">
-            <div className="flex items-start justify-between gap-4 mb-4">
+          <CardHeader className="pb-2 flex-grow">
+            <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <h3 className="flex items-center gap-2 text-xl font-semibold mb-2">
+                <CardTitle className="flex items-center gap-2 text-xl mb-1">
                   {habit.title}
                   {habit.is_popular && (
                     <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
                   )}
-                </h3>
+                </CardTitle>
                 <p className="text-sm text-muted-foreground">{habit.description}</p>
               </div>
               <button 
                 onClick={() => handleComplete(habit)}
-                className="neo-button p-2 aspect-square rounded-xl text-primary hover:text-white"
+                className="shrink-0 p-2 rounded-full bg-habit-success hover:bg-green-100 text-green-600 transition-all duration-300 hover:scale-110"
+                style={{
+                  boxShadow: "0 0 15px rgba(167, 243, 208, 0.5)",
+                }}
               >
                 <Check className="w-5 h-5" />
               </button>
             </div>
-          </div>
-          <div className="mt-auto pt-4 flex items-center justify-between">
-            <span className="category-tag">
-              {translateCategory(habit.category)}
-            </span>
-            <div className="xp-badge text-amber-500">
-              <Star className="w-4 h-4" />
-              <span>{habit.experience_points} XP</span>
+          </CardHeader>
+          <CardContent className="mt-auto pt-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className={`px-3 py-1 rounded-full ${getCategoryColor(habit.category)}`}>
+                {translateCategory(habit.category)}
+              </span>
+              <div className="flex items-center gap-1.5 text-amber-500">
+                <Star className="w-4 h-4" />
+                <span className="font-medium">
+                  {habit.experience_points} XP
+                </span>
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );

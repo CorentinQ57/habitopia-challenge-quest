@@ -6,25 +6,25 @@
  
 @layer base {
   :root {
-    --background: 225 27% 17%;
-    --foreground: 0 0% 100%;
-    --card: 222 19% 21%;
-    --card-foreground: 0 0% 100%;
-    --popover: 222 19% 21%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 212 67% 59%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 217 25% 27%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 217 25% 27%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 212 67% 59%;
-    --accent-foreground: 0 0% 100%;
+    --background: 0 0% 98%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 47.9 95.8% 53.1%;
+    --primary-foreground: 26 83.3% 14.1%;
+    --secondary: 145.7 52.5% 55.3%;
+    --secondary-foreground: 26 83.3% 14.1%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 217 25% 27%;
-    --input: 217 25% 27%;
-    --ring: 212 67% 59%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
     --radius: 1rem;
   }
 
@@ -35,8 +35,7 @@
   body {
     @apply bg-background text-foreground antialiased font-inter;
     font-feature-settings: "rlig" 1, "calt" 1;
-    background: linear-gradient(135deg, #1E2435 0%, #2A3045 100%);
-    min-height: 100vh;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f1f5f9' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -44,73 +43,79 @@
   }
 
   h1 {
-    @apply text-4xl font-bold;
-    background: linear-gradient(to right, #4A90E2, #89CFF0);
+    @apply text-4xl font-bold -tracking-[0.1em];
+    background: linear-gradient(to right, #467FF7, #A0DFFF);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 30px rgba(74, 144, 226, 0.3);
+    animation: gradient 8s ease infinite;
   }
 
   h2 {
-    @apply text-3xl font-bold;
+    @apply text-3xl font-bold -tracking-[0.1em];
   }
 
   h3 {
     @apply text-2xl font-semibold;
   }
 
-  .neo-card {
-    @apply rounded-xl p-6 transition-all duration-300;
-    background: linear-gradient(145deg, #2A3045, #1E2435);
+  .habit-card {
+    @apply bg-white rounded-2xl p-6 shadow-lg transition-all duration-200;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
     box-shadow: 
-      8px 8px 16px rgba(0, 0, 0, 0.2),
-      -8px -8px 16px rgba(255, 255, 255, 0.05);
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
-  .neo-card:hover {
+  .habit-card:hover {
+    transform: translateY(-2px);
     box-shadow: 
-      12px 12px 20px rgba(0, 0, 0, 0.25),
-      -12px -12px 20px rgba(255, 255, 255, 0.07);
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.6);
   }
 
-  .neo-button {
-    @apply px-4 py-2 rounded-xl font-semibold transition-all duration-300 relative overflow-hidden;
-    background: linear-gradient(145deg, #2A3045, #1E2435);
-    box-shadow: 
-      4px 4px 8px rgba(0, 0, 0, 0.2),
-      -4px -4px 8px rgba(255, 255, 255, 0.05),
-      inset 1px 1px 1px rgba(255, 255, 255, 0.05);
+  .habit-button {
+    @apply px-4 py-2 rounded-full transition-all duration-200;
+    background: linear-gradient(135deg, #A0DFFF, #467FF7);
+    box-shadow: 0 0 15px rgba(160, 223, 255, 0.5);
   }
 
-  .neo-button:hover {
-    @apply transform scale-105;
-    box-shadow: 
-      6px 6px 12px rgba(0, 0, 0, 0.25),
-      -6px -6px 12px rgba(255, 255, 255, 0.07),
-      inset 1px 1px 1px rgba(255, 255, 255, 0.07),
-      0 0 15px rgba(74, 144, 226, 0.3);
+  .habit-button:hover {
+    @apply scale-105;
+    box-shadow: 0 0 20px rgba(160, 223, 255, 0.7);
   }
 
-  .neo-button:active {
-    @apply transform scale-95;
-    box-shadow: 
-      inset 4px 4px 8px rgba(0, 0, 0, 0.2),
-      inset -4px -4px 8px rgba(255, 255, 255, 0.05);
+  .habit-icon {
+    @apply w-10 h-10 rounded-full flex items-center justify-center;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
-  .category-tag {
-    @apply px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300;
-    background: linear-gradient(145deg, rgba(74, 144, 226, 0.2), rgba(74, 144, 226, 0.1));
-    box-shadow: 
-      2px 2px 4px rgba(0, 0, 0, 0.1),
-      -2px -2px 4px rgba(255, 255, 255, 0.05);
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
   }
 
-  .xp-badge {
-    @apply flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium;
-    background: linear-gradient(145deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
-    box-shadow: 
-      2px 2px 4px rgba(0, 0, 0, 0.1),
-      -2px -2px 4px rgba(255, 255, 255, 0.05);
+  @keyframes glow {
+    0% {
+      box-shadow: 0 0 5px rgba(160, 223, 255, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(160, 223, 255, 0.6);
+    }
+    100% {
+      box-shadow: 0 0 5px rgba(160, 223, 255, 0.3);
+    }
   }
 }
