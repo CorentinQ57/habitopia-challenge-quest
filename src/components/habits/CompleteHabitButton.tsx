@@ -11,26 +11,27 @@ export const CompleteHabitButton = ({ isCompleted, onClick }: CompleteHabitButto
     <button 
       onClick={onClick}
       className={cn(
-        "shrink-0 w-12 h-12 rounded-full transition-all duration-300 shadow-lg",
-        "hover:scale-105 active:scale-95",
-        "flex items-center justify-center",
+        "w-full h-12 rounded-lg transition-all duration-300",
+        "flex items-center justify-center gap-2 font-medium",
+        "transform hover:-translate-y-1 active:translate-y-0",
         isCompleted 
-          ? "bg-habit-success hover:bg-red-500 hover:rotate-12" 
-          : "bg-white hover:bg-habit-success"
+          ? "bg-red-500 hover:bg-red-600 text-white" 
+          : "bg-habit-success hover:bg-emerald-400 text-white",
+        "shadow-[0_4px_0_rgb(34,197,94)] hover:shadow-[0_6px_0_rgb(34,197,94)]",
+        "active:shadow-[0_0px_0_rgb(34,197,94)]",
+        isCompleted && "animate-glow"
       )}
       style={{
         boxShadow: isCompleted 
-          ? '0 0 20px rgba(167, 243, 208, 0.5)' 
-          : '0 4px 12px rgba(0, 0, 0, 0.1)',
+          ? '0 4px 0 rgb(239, 68, 68), 0 0 20px rgba(167, 243, 208, 0.5)' 
+          : '0 4px 0 rgb(34, 197, 94)',
       }}
     >
+      <span>{isCompleted ? "Annuler" : "Valider"}</span>
       {isCompleted ? (
-        <X className="w-6 h-6 text-white transition-transform" />
+        <X className="w-5 h-5" />
       ) : (
-        <Check className={cn(
-          "w-6 h-6 transition-colors",
-          isCompleted ? "text-white" : "text-habit-success"
-        )} />
+        <Check className="w-5 h-5" />
       )}
     </button>
   );

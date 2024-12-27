@@ -160,31 +160,30 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
       >
         <DeleteHabitButton habitId={habit.id} habitTitle={habit.title} />
         
-        <CardHeader className="pb-2 flex-grow">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <CardTitle className={`flex items-center gap-2 text-xl mb-2 ${isCompleted ? 'text-muted-foreground' : ''}`}>
-                {habit.title}
-                {habit.is_popular && (
-                  <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
-                )}
-              </CardTitle>
-              <p className={`text-sm ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
-                {habit.description}
-              </p>
-            </div>
-            <CompleteHabitButton 
-              isCompleted={isCompleted}
-              onClick={handleClick}
-            />
+        <CardHeader className="pb-2">
+          <div className="space-y-2">
+            <CardTitle className={`flex items-center gap-2 text-xl ${isCompleted ? 'text-muted-foreground' : ''}`}>
+              {habit.title}
+              {habit.is_popular && (
+                <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
+              )}
+            </CardTitle>
+            <p className={`text-sm ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+              {habit.description}
+            </p>
           </div>
         </CardHeader>
 
-        <CardContent className="pt-4">
+        <CardContent className="flex-1 flex flex-col justify-between gap-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <CategoryBadge category={habit.category} />
             <ExperiencePoints points={habit.experience_points} />
           </div>
+          
+          <CompleteHabitButton 
+            isCompleted={isCompleted}
+            onClick={handleClick}
+          />
         </CardContent>
       </Card>
 
