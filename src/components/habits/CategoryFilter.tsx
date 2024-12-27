@@ -1,19 +1,12 @@
-import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const categories = [
-  { value: "Health", label: "Santé" },
-  { value: "Wellness", label: "Bien-être" },
-  { value: "Learning", label: "Apprentissage" },
-  { value: "Productivity", label: "Productivité" },
+  { value: "all", label: "Toutes", color: "bg-gray-100 hover:bg-gray-200 text-gray-700" },
+  { value: "Health", label: "Santé", color: "text-stella-royal bg-stella-royal/10 hover:bg-stella-royal/20" },
+  { value: "Wellness", label: "Bien-être", color: "text-stella-purple bg-stella-purple/10 hover:bg-stella-purple/20" },
+  { value: "Learning", label: "Apprentissage", color: "text-stella-royal bg-stella-royal/10 hover:bg-stella-royal/20" },
+  { value: "Productivity", label: "Productivité", color: "text-stella-purple bg-stella-purple/10 hover:bg-stella-purple/20" },
 ];
 
 interface CategoryFilterProps {
@@ -23,34 +16,23 @@ interface CategoryFilterProps {
 
 export const CategoryFilter = ({ selectedCategory, onCategoryChange }: CategoryFilterProps) => {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
-          className="bg-white/50 backdrop-blur-sm border-gray-200/50 hover:bg-white/60"
+    <div className="flex flex-wrap gap-2">
+      {categories.map((category) => (
+        <Button
+          key={category.value}
+          variant="outline"
+          onClick={() => onCategoryChange(category.value === "all" ? null : category.value)}
+          className={cn(
+            "backdrop-blur-sm border-gray-200/50",
+            category.color,
+            selectedCategory === category.value || (category.value === "all" && !selectedCategory)
+              ? "ring-2 ring-offset-2 ring-stella-royal/20"
+              : ""
+          )}
         >
-          {selectedCategory ? categories.find(c => c.value === selectedCategory)?.label : "Toutes les catégories"}
+          {category.label}
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Filtrer par catégorie</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuCheckboxItem
-          checked={!selectedCategory}
-          onCheckedChange={() => onCategoryChange(null)}
-        >
-          Toutes les catégories
-        </DropdownMenuCheckboxItem>
-        {categories.map((category) => (
-          <DropdownMenuCheckboxItem
-            key={category.value}
-            checked={selectedCategory === category.value}
-            onCheckedChange={() => onCategoryChange(category.value)}
-          >
-            {category.label}
-          </DropdownMenuCheckboxItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      ))}
+    </div>
   );
 };

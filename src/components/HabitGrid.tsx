@@ -33,7 +33,7 @@ export const HabitGrid = ({ habits, isLoading }: HabitGridProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex justify-start">
         <CategoryFilter
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
