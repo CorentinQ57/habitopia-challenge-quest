@@ -25,11 +25,11 @@ export const AuthUI = () => {
                   transform: 'translateY(0)',
                   transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   boxShadow: '0 4px 0 rgb(63 43 150 / 0.5)',
-                  '&:hover': {
+                  ':hover': {
                     transform: 'translateY(-2px)',
                     boxShadow: '0 6px 0 rgb(63 43 150 / 0.5)',
                   },
-                  '&:active': {
+                  ':active': {
                     transform: 'translateY(2px)',
                     boxShadow: '0 2px 0 rgb(63 43 150 / 0.5)',
                   },
