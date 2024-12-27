@@ -49,14 +49,12 @@
 
   h2 {
     @apply text-3xl font-normal text-stella-black;
+    letter-spacing: 0.05em;
   }
 
   h3 {
     @apply text-2xl font-normal text-stella-black;
-  }
-
-  p {
-    @apply font-poppins tracking-tight;
+    letter-spacing: 0.05em;
   }
 
   .card {
