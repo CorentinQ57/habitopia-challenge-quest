@@ -56,8 +56,11 @@ export const StreakCard = () => {
   const useFreeze = async () => {
     if (!streak || streak.freeze_tokens <= 0) return;
 
+    const today = new Date().toISOString().split('T')[0];
+    const lastActivityDate = new Date(streak.last_activity_date).toISOString().split('T')[0];
+
     // Vérifier si la série du jour a déjà été validée
-    if (streak.last_activity_date === new Date().toISOString().split('T')[0]) {
+    if (lastActivityDate === today && streak.tasks_completed_today >= 3) {
       toast({
         title: "Action impossible",
         description: "Vous avez déjà validé votre série aujourd'hui.",
@@ -71,7 +74,7 @@ export const StreakCard = () => {
         .from("user_streaks")
         .update({ 
           freeze_tokens: streak.freeze_tokens - 1,
-          freeze_used_date: new Date().toISOString().split('T')[0]
+          freeze_used_date: today
         })
         .eq("id", streak.id)
         .eq("user_id", streak.user_id);
