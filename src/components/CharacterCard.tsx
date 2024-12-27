@@ -56,6 +56,18 @@ export const CharacterCard = () => {
     },
   });
 
+  const getCharacterImage = (skinTitle: string | undefined) => {
+    if (!skinTitle) return null;
+    
+    const images: { [key: string]: string } = {
+      'Guerrier': '/warrior.jpg',
+      'Mage': '/magus.jpg',
+      'Ninja': '/ninja.jpg'
+    };
+    
+    return images[skinTitle] || null;
+  };
+
   const calculateLevel = (xp: number) => {
     return Math.floor(xp / 100) + 1;
   };
@@ -66,6 +78,7 @@ export const CharacterCard = () => {
 
   const level = calculateLevel(totalXP || 0);
   const progress = calculateProgress(totalXP || 0);
+  const characterImage = getCharacterImage(activeSkin?.skin?.title);
 
   return (
     <>
@@ -81,10 +94,10 @@ export const CharacterCard = () => {
           <div className="relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-lg group-hover:blur-xl transition-all duration-300 opacity-75" />
             <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center border-4 border-white/20 shadow-lg transform group-hover:scale-105 transition-all duration-300 overflow-hidden">
-              {activeSkin?.skin?.preview_url ? (
+              {characterImage ? (
                 <img 
-                  src={activeSkin.skin.preview_url} 
-                  alt={activeSkin.skin.title}
+                  src={characterImage}
+                  alt={activeSkin?.skin?.title || "Character"}
                   className="w-full h-full object-cover"
                 />
               ) : (
