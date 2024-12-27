@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Gem, ShoppingBag, Award, Trophy, Star, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ interface Reward {
 
 export const RewardShop = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: rewards } = useQuery({
     queryKey: ["rewards"],
@@ -58,17 +59,33 @@ export const RewardShop = () => {
     }
 
     try {
-      const { error } = await supabase
+      // Insérer l'achat de la récompense
+      const { error: purchaseError } = await supabase
         .from("user_rewards")
         .insert([{ reward_id: reward.id }]);
 
-      if (error) throw error;
+      if (purchaseError) throw purchaseError;
+
+      // Déduire l'XP en ajoutant un log négatif
+      const { error: xpError } = await supabase
+        .from("habit_logs")
+        .insert([{
+          habit_id: null,
+          experience_gained: -reward.cost,
+          notes: `Achat de la récompense: ${reward.title}`
+        }]);
+
+      if (xpError) throw xpError;
+
+      // Rafraîchir les données
+      queryClient.invalidateQueries({ queryKey: ["totalXP"] });
 
       toast({
         title: "Récompense débloquée !",
         description: `Vous avez débloqué : ${reward.title}`,
       });
     } catch (error) {
+      console.error("Erreur lors de l'achat:", error);
       toast({
         title: "Erreur",
         description: "Impossible d'acheter la récompense.",
