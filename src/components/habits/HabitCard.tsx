@@ -27,7 +27,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
   const handleComplete = async () => {
     try {
-      // Vérifier d'abord le nombre d'habitudes complétées aujourd'hui
+      // 1. Vérifier d'abord le nombre d'habitudes complétées aujourd'hui
       const today = new Date().toISOString().split('T')[0];
       const { data: habitsCompleted } = await supabase
         .from("habit_logs")
@@ -35,19 +35,36 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
         .gte("completed_at", `${today}T00:00:00`)
         .lte("completed_at", `${today}T23:59:59`);
 
-      // Mettre à jour le compteur dans user_streaks
-      const { error: streakError } = await supabase
+      // 2. Récupérer ou créer l'enregistrement user_streaks
+      const { data: existingStreak } = await supabase
         .from("user_streaks")
-        .upsert([
-          {
+        .select("*")
+        .maybeSingle();
+
+      if (!existingStreak) {
+        // Créer un nouvel enregistrement si aucun n'existe
+        await supabase
+          .from("user_streaks")
+          .insert([{
+            tasks_completed_today: 1,
+            last_activity_date: today,
+            current_streak: 0,
+            longest_streak: 0
+          }]);
+      } else {
+        // Mettre à jour l'enregistrement existant
+        const { error: streakError } = await supabase
+          .from("user_streaks")
+          .update({
             tasks_completed_today: (habitsCompleted?.length || 0) + 1,
             last_activity_date: today
-          }
-        ]);
+          })
+          .eq('id', existingStreak.id);
 
-      if (streakError) throw streakError;
+        if (streakError) throw streakError;
+      }
 
-      // Enregistrer l'habitude comme complétée
+      // 3. Enregistrer l'habitude comme complétée
       const { error: habitError } = await supabase
         .from("habit_logs")
         .insert([{ 
