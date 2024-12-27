@@ -5,6 +5,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { Json } from "@/integrations/supabase/types";
 
 interface ThemeColors {
   primary: string;
@@ -16,6 +17,7 @@ interface ThemeColors {
 interface Theme {
   id: string;
   title: string;
+  type: string;
   theme_colors: ThemeColors;
 }
 
@@ -24,6 +26,18 @@ interface UserSkin {
   skin_id: string;
   is_active: boolean;
   skin: Theme;
+}
+
+interface RawUserSkin {
+  id: string;
+  skin_id: string;
+  is_active: boolean;
+  skin: {
+    id: string;
+    title: string;
+    type: string;
+    theme_colors: Json;
+  };
 }
 
 export const ThemeSelector = () => {
@@ -48,10 +62,23 @@ export const ThemeSelector = () => {
         `)
         .eq("is_active", true)
         .eq("skin.type", "theme")
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') throw error;
-      return data as UserSkin;
+      if (error) throw error;
+      
+      if (!data) return null;
+      
+      // Convert the raw data to our expected type
+      const rawSkin = data as RawUserSkin;
+      const themeColors = rawSkin.skin.theme_colors as ThemeColors;
+      
+      return {
+        ...rawSkin,
+        skin: {
+          ...rawSkin.skin,
+          theme_colors: themeColors
+        }
+      } as UserSkin;
     },
   });
 
@@ -63,6 +90,7 @@ export const ThemeSelector = () => {
         .select(`
           id,
           skin_id,
+          is_active,
           skin:skins (
             id,
             title,
@@ -73,7 +101,15 @@ export const ThemeSelector = () => {
         .eq("skin.type", "theme");
       
       if (error) throw error;
-      return (data?.filter(item => item.skin) || []) as UserSkin[];
+      
+      // Convert the raw data to our expected type
+      return (data?.filter(item => item.skin) || []).map(rawSkin => ({
+        ...rawSkin,
+        skin: {
+          ...rawSkin.skin,
+          theme_colors: rawSkin.skin.theme_colors as ThemeColors
+        }
+      })) as UserSkin[];
     },
   });
 
@@ -114,6 +150,7 @@ export const ThemeSelector = () => {
   const defaultTheme: Theme = {
     id: "default",
     title: "Thème par défaut",
+    type: "theme",
     theme_colors: {
       primary: "hsl(var(--primary))",
       secondary: "hsl(var(--secondary))",
@@ -123,7 +160,7 @@ export const ThemeSelector = () => {
   };
 
   useEffect(() => {
-    const theme = activeTheme?.skin?.theme_colors as ThemeColors | undefined;
+    const theme = activeTheme?.skin?.theme_colors;
     if (theme) {
       document.documentElement.style.setProperty('--theme-primary', theme.primary);
       document.documentElement.style.setProperty('--theme-secondary', theme.secondary);
@@ -147,7 +184,7 @@ export const ThemeSelector = () => {
 
   const availableThemes = [
     defaultTheme,
-    ...(purchasedThemes?.map(({ skin }) => skin).filter(Boolean) || []),
+    ...(purchasedThemes?.map(({ skin }) => skin) || []),
   ];
 
   return (
