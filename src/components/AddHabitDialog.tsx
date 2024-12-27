@@ -33,6 +33,7 @@ export const AddHabitDialog = () => {
       description: formData.get("description") as string,
       category: formData.get("category") as string,
       experience_points: parseInt(formData.get("experience_points") as string) || 10,
+      user_id: (await supabase.auth.getUser()).data.user?.id
     };
 
     try {
@@ -48,6 +49,7 @@ export const AddHabitDialog = () => {
       queryClient.invalidateQueries({ queryKey: ["habits"] });
       setOpen(false);
     } catch (error) {
+      console.error("Error creating habit:", error);
       toast({
         title: "Erreur",
         description: "Impossible de créer l'habitude. Veuillez réessayer.",

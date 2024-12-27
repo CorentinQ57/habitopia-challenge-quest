@@ -54,6 +54,7 @@ export type Database = {
           id: string
           is_popular: boolean | null
           title: string
+          user_id: string | null
         }
         Insert: {
           category?: string | null
@@ -64,6 +65,7 @@ export type Database = {
           id?: string
           is_popular?: boolean | null
           title: string
+          user_id?: string | null
         }
         Update: {
           category?: string | null
@@ -74,6 +76,7 @@ export type Database = {
           id?: string
           is_popular?: boolean | null
           title?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -169,16 +172,19 @@ export type Database = {
           id: string
           purchased_at: string
           reward_id: string | null
+          user_id: string | null
         }
         Insert: {
           id?: string
           purchased_at?: string
           reward_id?: string | null
+          user_id?: string | null
         }
         Update: {
           id?: string
           purchased_at?: string
           reward_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -196,18 +202,21 @@ export type Database = {
           is_active: boolean | null
           purchased_at: string
           skin_id: string
+          user_id: string | null
         }
         Insert: {
           id?: string
           is_active?: boolean | null
           purchased_at?: string
           skin_id: string
+          user_id?: string | null
         }
         Update: {
           id?: string
           is_active?: boolean | null
           purchased_at?: string
           skin_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -230,6 +239,7 @@ export type Database = {
           longest_streak: number
           tasks_completed_today: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -241,6 +251,7 @@ export type Database = {
           longest_streak?: number
           tasks_completed_today?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -252,6 +263,7 @@ export type Database = {
           longest_streak?: number
           tasks_completed_today?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }

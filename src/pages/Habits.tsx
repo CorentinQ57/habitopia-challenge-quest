@@ -7,9 +7,12 @@ const Habits = () => {
   const { data: habits, isLoading } = useQuery({
     queryKey: ["habits"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from("habits")
         .select("*")
+        .eq('user_id', user?.id)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
