@@ -14,14 +14,16 @@ export const StreakCard = () => {
   const { data: streak } = useQuery({
     queryKey: ["userStreak"],
     queryFn: async () => {
-      const { data: existingStreak, error: fetchError } = await supabase
+      // First try to get any existing streak
+      const { data: streaks, error: fetchError } = await supabase
         .from("user_streaks")
         .select("*")
-        .maybeSingle();
+        .limit(1);
 
       if (fetchError) throw fetchError;
 
-      if (!existingStreak) {
+      // If no streak exists, create one
+      if (!streaks || streaks.length === 0) {
         const { data: newStreak, error: createError } = await supabase
           .from("user_streaks")
           .insert([{
@@ -39,7 +41,8 @@ export const StreakCard = () => {
         return newStreak;
       }
 
-      return existingStreak;
+      // Return the first streak found
+      return streaks[0];
     },
   });
 
