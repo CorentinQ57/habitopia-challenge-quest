@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Habits from "./pages/Habits";
 import Statistics from "./pages/Statistics";
 import Character from "./pages/Character";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -29,7 +30,7 @@ const App = () => (
                   <Route path="/habitudes" element={<Habits />} />
                   <Route path="/statistiques" element={<Statistics />} />
                   <Route path="/personnage" element={<Character />} />
-                  <Route path="/profil" element={<Dashboard />} />
+                  <Route path="/profil" element={<Profile />} />
                 </Routes>
               </div>
             </main>
