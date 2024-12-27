@@ -18,10 +18,11 @@ export const ThemeSelector = () => {
           *,
           skin:skins(*)
         `)
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .eq("skin.type", "theme");
       
       if (error) throw error;
-      return data;
+      return data?.filter(item => item.skin) || [];
     },
   });
 
@@ -75,7 +76,7 @@ export const ThemeSelector = () => {
     },
   });
 
-  // Find the active theme, safely accessing the skin property
+  // Find the active theme
   const activeTheme = userSkins?.find(item => item.skin?.type === "theme")?.skin_id;
 
   const defaultTheme = {
