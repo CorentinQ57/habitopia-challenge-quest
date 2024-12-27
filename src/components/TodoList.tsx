@@ -4,29 +4,29 @@ export const TodoList = () => {
   return (
     <div className="habit-card animate-fade-in">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold">Today's Todos</h3>
-        <button className="text-sm text-muted-foreground">View Details</button>
+        <h3 className="text-2xl font-bold">Tâches du jour</h3>
+        <button className="text-sm text-muted-foreground">Voir détails</button>
       </div>
       <div className="space-y-4">
         {[
           { 
-            title: "Study",
-            time: "10:00 am",
+            title: "Étudier",
+            time: "10:00",
             location: "K-Cafe",
             icon: Coffee,
             done: false
           },
           {
-            title: "Groceries",
-            time: "02:00 pm",
+            title: "Courses",
+            time: "14:00",
             location: "Hayday Market",
             icon: ShoppingCart,
             done: false
           },
           {
-            title: "Eat Healthy Food",
-            time: "08:30 am",
-            location: "Home",
+            title: "Manger sainement",
+            time: "08:30",
+            location: "Maison",
             icon: Home,
             done: true
           }
