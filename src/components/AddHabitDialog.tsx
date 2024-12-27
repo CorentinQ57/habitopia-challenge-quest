@@ -63,10 +63,9 @@ export const AddHabitDialog = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2 bg-habit-warning/20 hover:bg-habit-warning/30 border-0">
-          <Plus className="w-4 h-4" />
-          Nouvelle Habitude
-        </Button>
+        <div className="h-full min-h-[200px] rounded-lg border border-dashed border-gray-300 bg-gray-50/50 hover:bg-gray-50/80 transition-colors cursor-pointer flex items-center justify-center">
+          <Plus className="w-12 h-12 text-gray-400" />
+        </div>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
