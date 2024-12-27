@@ -10,6 +10,7 @@ export const SkinShop = () => {
       const { data, error } = await supabase
         .from("skins")
         .select("*")
+        .eq('type', 'character')
         .order("cost", { ascending: true });
       
       if (error) throw error;
