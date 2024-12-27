@@ -27,7 +27,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
   const handleComplete = async () => {
     try {
-      // 1. Vérifier d'abord le nombre d'habitudes complétées aujourd'hui
+      // 1. Récupérer le nombre d'habitudes complétées aujourd'hui
       const today = new Date().toISOString().split('T')[0];
       const { data: habitsCompleted } = await supabase
         .from("habit_logs")
@@ -35,22 +35,13 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
         .gte("completed_at", `${today}T00:00:00`)
         .lte("completed_at", `${today}T23:59:59`);
 
-      if (habitsCompleted && habitsCompleted.length >= 3) {
-        toast({
-          title: "Limite atteinte",
-          description: "Vous avez déjà complété 3 habitudes aujourd'hui !",
-          variant: "destructive",
-        });
-        return;
-      }
+      const tasksCompletedToday = (habitsCompleted?.length || 0) + 1;
 
       // 2. Récupérer l'enregistrement user_streaks actuel
       const { data: existingStreak } = await supabase
         .from("user_streaks")
         .select("*")
         .maybeSingle();
-
-      const tasksCompletedToday = (habitsCompleted?.length || 0) + 1;
 
       if (!existingStreak) {
         // Créer un nouvel enregistrement si aucun n'existe
@@ -64,6 +55,9 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
           }]);
       } else {
         // Mettre à jour l'enregistrement existant
+        // On n'incrémente la série que si :
+        // 1. On atteint exactement 3 tâches aujourd'hui
+        // 2. On ne l'a pas déjà fait aujourd'hui (last_activity_date différent)
         const shouldIncrementStreak = tasksCompletedToday === 3 && 
           existingStreak.last_activity_date !== today;
 
@@ -77,16 +71,18 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
           .from("user_streaks")
           .update({
             tasks_completed_today: tasksCompletedToday,
-            last_activity_date: today,
-            current_streak: newCurrentStreak,
-            longest_streak: newLongestStreak
+            ...(shouldIncrementStreak && {
+              last_activity_date: today,
+              current_streak: newCurrentStreak,
+              longest_streak: newLongestStreak
+            })
           })
           .eq('id', existingStreak.id);
 
         if (streakError) throw streakError;
       }
 
-      // 3. Enregistrer l'habitude comme complétée
+      // 3. Enregistrer l'habitude comme complétée et gagner l'XP
       const { error: habitError } = await supabase
         .from("habit_logs")
         .insert([{ 
