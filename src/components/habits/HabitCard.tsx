@@ -27,7 +27,28 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
   const handleComplete = async () => {
     try {
-      const { error } = await supabase
+      // Vérifier d'abord le nombre d'habitudes complétées aujourd'hui
+      const today = new Date().toISOString().split('T')[0];
+      const { data: habitsCompleted } = await supabase
+        .from("habit_logs")
+        .select("id")
+        .gte("completed_at", `${today}T00:00:00`)
+        .lte("completed_at", `${today}T23:59:59`);
+
+      // Mettre à jour le compteur dans user_streaks
+      const { error: streakError } = await supabase
+        .from("user_streaks")
+        .upsert([
+          {
+            tasks_completed_today: (habitsCompleted?.length || 0) + 1,
+            last_activity_date: today
+          }
+        ]);
+
+      if (streakError) throw streakError;
+
+      // Enregistrer l'habitude comme complétée
+      const { error: habitError } = await supabase
         .from("habit_logs")
         .insert([{ 
           habit_id: habit.id,
@@ -35,7 +56,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
           notes: `Habitude complétée: ${habit.title}`
         }]);
 
-      if (error) throw error;
+      if (habitError) throw habitError;
 
       setIsCompleted(true);
       
