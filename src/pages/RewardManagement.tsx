@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { AddRewardDialog } from "@/components/rewards/AddRewardDialog";
 import { RewardGrid } from "@/components/rewards/RewardGrid";
+import { AddRewardDialog } from "@/components/rewards/AddRewardDialog";
+import { Gift } from "lucide-react";
 
 const RewardManagement = () => {
   const { data: userRewards, isLoading } = useQuery({
@@ -58,12 +57,8 @@ const RewardManagement = () => {
           <Gift className="w-12 h-12 mx-auto text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold">Aucune récompense</h3>
           <p className="text-muted-foreground mt-2">
-            Vous n'avez pas encore de récompenses. Commencez par en créer une !
+            Vous n'avez pas encore de récompenses. Commencez par en débloquer une !
           </p>
-          <Button className="mt-4" onClick={() => document.querySelector<HTMLButtonElement>("[data-new-reward]")?.click()}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nouvelle Récompense
-          </Button>
         </div>
       ) : (
         <RewardGrid rewards={userRewards} />
