@@ -1,4 +1,4 @@
-import { Check, Trophy, Star } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,9 @@ import { useState, useEffect } from "react";
 import { updateUserStreak } from "@/utils/streakManagement";
 import { CancelHabitDialog } from "./CancelHabitDialog";
 import { DeleteHabitButton } from "./DeleteHabitButton";
+import { CategoryBadge } from "./CategoryBadge";
+import { CompleteHabitButton } from "./CompleteHabitButton";
+import { ExperiencePoints } from "./ExperiencePoints";
 
 interface Habit {
   id: string;
@@ -144,31 +147,11 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
     }
   };
 
-  const translateCategory = (category: string) => {
-    const translations: { [key: string]: string } = {
-      "Health": "Santé",
-      "Wellness": "Bien-être",
-      "Learning": "Apprentissage",
-      "Productivity": "Productivité"
-    };
-    return translations[category] || category;
-  };
-
-  const getCategoryColor = (category: string): string => {
-    const colors: { [key: string]: string } = {
-      "Health": "text-emerald-600 bg-emerald-50",
-      "Wellness": "text-blue-600 bg-blue-50",
-      "Learning": "text-purple-600 bg-purple-50",
-      "Productivity": "text-orange-600 bg-orange-50"
-    };
-    return colors[category] || "text-gray-600 bg-gray-50";
-  };
-
   return (
     <>
       <Card 
-        className={`group relative transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col min-h-[200px]
-          ${isCompleted ? 'bg-habit-success/20' : ''}`}
+        className={`group relative transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col min-h-[220px]
+          ${isCompleted ? 'bg-habit-success/20' hover:bg-habit-success/30' : 'hover:bg-white'}`}
         style={{
           boxShadow: isCompleted 
             ? "0 8px 32px 0 rgba(167, 243, 208, 0.2)"
@@ -176,10 +159,11 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
         }}
       >
         <DeleteHabitButton habitId={habit.id} habitTitle={habit.title} />
+        
         <CardHeader className="pb-2 flex-grow">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <CardTitle className={`flex items-center gap-2 text-xl mb-1 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+              <CardTitle className={`flex items-center gap-2 text-xl mb-2 ${isCompleted ? 'text-muted-foreground' : ''}`}>
                 {habit.title}
                 {habit.is_popular && (
                   <Trophy className="w-4 h-4 text-yellow-500 animate-bounce-scale" />
@@ -189,31 +173,17 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
                 {habit.description}
               </p>
             </div>
-            <button 
+            <CompleteHabitButton 
+              isCompleted={isCompleted}
               onClick={handleClick}
-              className={`shrink-0 p-2 rounded-full transition-all duration-300
-                ${isCompleted 
-                  ? 'bg-habit-success hover:bg-red-500 hover:text-white' 
-                  : 'bg-white hover:bg-habit-success hover:text-white'}`}
-              style={{
-                boxShadow: isCompleted ? '0 0 15px rgba(167, 243, 208, 0.5)' : 'none',
-              }}
-            >
-              <Check className={`w-5 h-5 ${isCompleted ? 'text-white' : 'text-habit-success'}`} />
-            </button>
+            />
           </div>
         </CardHeader>
-        <CardContent className="mt-auto pt-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className={`px-3 py-1 rounded-full ${getCategoryColor(habit.category)}`}>
-              {translateCategory(habit.category)}
-            </span>
-            <div className="flex items-center gap-1.5 text-amber-500">
-              <Star className="w-4 h-4" />
-              <span className="font-medium">
-                {habit.experience_points} XP
-              </span>
-            </div>
+
+        <CardContent className="pt-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <CategoryBadge category={habit.category} />
+            <ExperiencePoints points={habit.experience_points} />
           </div>
         </CardContent>
       </Card>
