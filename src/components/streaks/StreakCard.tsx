@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Fire } from "lucide-react";
+import { Flame } from "lucide-react";
 
 export const StreakCard = () => {
   const { data: streak } = useQuery({
@@ -23,7 +23,7 @@ export const StreakCard = () => {
     <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Fire className="w-5 h-5 text-orange-500" />
+          <Flame className="w-5 h-5 text-orange-500" />
           Série en cours
         </CardTitle>
       </CardHeader>
