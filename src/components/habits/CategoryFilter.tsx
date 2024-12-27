@@ -17,9 +17,12 @@ export const CategoryFilter = ({ selectedCategory, onCategoryChange }: CategoryF
   const { data: categories } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from("habit_categories")
-        .select("*")
+        .select("name, color")
+        .or(`user_id.eq.${user?.id},is_default.eq.true`)
         .order("is_default", { ascending: false })
         .order("name");
       
