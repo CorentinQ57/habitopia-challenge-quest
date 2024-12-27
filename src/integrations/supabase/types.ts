@@ -113,6 +113,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_freeze_token: boolean | null
           level: number
           title: string
         }
@@ -121,6 +122,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_freeze_token?: boolean | null
           level?: number
           title: string
         }
@@ -129,6 +131,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_freeze_token?: boolean | null
           level?: number
           title?: string
         }
@@ -164,6 +167,7 @@ export type Database = {
         Row: {
           created_at: string
           current_streak: number
+          freeze_tokens: number | null
           id: string
           last_activity_date: string
           longest_streak: number
@@ -173,6 +177,7 @@ export type Database = {
         Insert: {
           created_at?: string
           current_streak?: number
+          freeze_tokens?: number | null
           id?: string
           last_activity_date?: string
           longest_streak?: number
@@ -182,6 +187,7 @@ export type Database = {
         Update: {
           created_at?: string
           current_streak?: number
+          freeze_tokens?: number | null
           id?: string
           last_activity_date?: string
           longest_streak?: number

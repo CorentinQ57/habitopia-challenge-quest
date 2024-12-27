@@ -1,15 +1,17 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Flame } from "lucide-react";
+import { Flame, Snowflake } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export const StreakCard = () => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: streak } = useQuery({
     queryKey: ["userStreak"],
     queryFn: async () => {
-      // Try to get existing streak data
       const { data: existingStreak, error: fetchError } = await supabase
         .from("user_streaks")
         .select("*")
@@ -17,7 +19,6 @@ export const StreakCard = () => {
 
       if (fetchError) throw fetchError;
 
-      // If no streak exists, create initial streak record
       if (!existingStreak) {
         const { data: newStreak, error: createError } = await supabase
           .from("user_streaks")
@@ -33,14 +34,56 @@ export const StreakCard = () => {
     },
   });
 
+  const useFreeze = async () => {
+    if (!streak || streak.freeze_tokens <= 0) return;
+
+    try {
+      const { error } = await supabase
+        .from("user_streaks")
+        .update({ 
+          freeze_tokens: streak.freeze_tokens - 1,
+          last_activity_date: new Date().toISOString().split('T')[0]
+        })
+        .eq("id", streak.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["userStreak"] });
+
+      toast({
+        title: "Série gelée !",
+        description: "Votre série est protégée pour aujourd'hui.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'utiliser le glaçon.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!streak) return null;
 
   return (
     <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Flame className="w-5 h-5 text-orange-500" />
-          Série en cours
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Flame className="w-5 h-5 text-orange-500" />
+            Série en cours
+          </div>
+          {streak.freeze_tokens > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={useFreeze}
+              className="flex items-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/20"
+            >
+              <Snowflake className="w-4 h-4 text-blue-500" />
+              <span className="text-blue-500">Utiliser un glaçon ({streak.freeze_tokens})</span>
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>

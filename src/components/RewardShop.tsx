@@ -17,6 +17,7 @@ interface Reward {
   description: string;
   cost: number;
   level: number;
+  is_freeze_token?: boolean;
 }
 
 export const RewardShop = () => {
@@ -66,6 +67,18 @@ export const RewardShop = () => {
 
       if (purchaseError) throw purchaseError;
 
+      // Si c'est un glaçon, mettre à jour le nombre de glaçons disponibles
+      if (reward.is_freeze_token) {
+        const { error: freezeError } = await supabase
+          .from("user_streaks")
+          .update({ 
+            freeze_tokens: supabase.sql`freeze_tokens + 1` 
+          })
+          .is("id", "not", null);
+
+        if (freezeError) throw freezeError;
+      }
+
       // Déduire l'XP en ajoutant un log négatif
       const { error: xpError } = await supabase
         .from("habit_logs")
@@ -79,6 +92,7 @@ export const RewardShop = () => {
 
       // Rafraîchir les données
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
+      queryClient.invalidateQueries({ queryKey: ["userStreak"] });
 
       toast({
         title: "Récompense débloquée !",
