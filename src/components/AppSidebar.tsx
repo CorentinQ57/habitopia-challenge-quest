@@ -86,7 +86,7 @@ export function AppSidebar() {
           <div className="mt-2">
             <SidebarMenu>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.title} className="my-2">
                   <SidebarMenuButton
                     asChild
                     isActive={location.pathname === item.url}
@@ -96,7 +96,7 @@ export function AppSidebar() {
                     <Link 
                       to={item.url} 
                       className={`
-                        flex items-center gap-3 relative p-2 rounded-md
+                        flex items-center gap-3 relative p-4 w-full
                         ${location.pathname === item.url 
                           ? 'bg-gradient-to-r from-[#a8c0ff] to-[#3f2b96]' 
                           : ''}
