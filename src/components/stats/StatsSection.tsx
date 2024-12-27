@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Activity, Award, Target, Zap } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { Activity, Award, Target, Zap, Clock } from "lucide-react";
+
+const COLORS = ['#9b87f5', '#87d4f5', '#f587b3', '#87f5b7'];
 
 export const StatsSection = () => {
   const { data: weeklyStats } = useQuery({
@@ -37,21 +39,69 @@ export const StatsSection = () => {
     },
   });
 
-  const { data: totalStats } = useQuery({
-    queryKey: ["totalStats"],
+  const { data: categoryStats } = useQuery({
+    queryKey: ["categoryStats"],
+    queryFn: async () => {
+      const { data: logs, error } = await supabase
+        .from("habit_logs")
+        .select(`
+          habits (
+            category
+          )
+        `);
+      
+      if (error) throw error;
+
+      const categories = logs.reduce((acc: any, log) => {
+        const category = log.habits?.category || 'Non catégorisé';
+        acc[category] = (acc[category] || 0) + 1;
+        return acc;
+      }, {});
+
+      return Object.entries(categories).map(([name, value]) => ({
+        name,
+        value
+      }));
+    },
+  });
+
+  const { data: hourlyStats } = useQuery({
+    queryKey: ["hourlyStats"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("habit_logs")
-        .select("*");
+        .select("completed_at");
       
       if (error) throw error;
-      
-      return {
-        totalHabits: data.length,
-        totalXP: data.reduce((sum, log) => sum + log.experience_gained, 0),
-        streak: Math.floor(data.length / 3), // Simulation d'une série
-        completion: ((data.length / (7 * 3)) * 100).toFixed(1) // Taux sur la semaine
-      };
+
+      const hourly = Array(24).fill(0).map((_, i) => ({
+        hour: i,
+        count: 0
+      }));
+
+      data.forEach(log => {
+        const hour = new Date(log.completed_at).getHours();
+        hourly[hour].count++;
+      });
+
+      return hourly;
+    },
+  });
+
+  const { data: streak } = useQuery({
+    queryKey: ["userStreak"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const { data, error } = await supabase
+        .from("user_streaks")
+        .select("*")
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -71,11 +121,11 @@ export const StatsSection = () => {
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-2 bg-purple-500/20 rounded-lg">
-                <Zap className="w-6 h-6 text-purple-500" />
+                <Award className="w-6 h-6 text-purple-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total XP</p>
-                <p className="text-2xl font-bold">{totalStats?.totalXP || 0}</p>
+                <p className="text-sm text-muted-foreground">Série Actuelle</p>
+                <p className="text-2xl font-bold">{streak?.current_streak || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -88,8 +138,8 @@ export const StatsSection = () => {
                 <Activity className="w-6 h-6 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Habitudes Complétées</p>
-                <p className="text-2xl font-bold">{totalStats?.totalHabits || 0}</p>
+                <p className="text-sm text-muted-foreground">Record de Série</p>
+                <p className="text-2xl font-bold">{streak?.longest_streak || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -99,11 +149,11 @@ export const StatsSection = () => {
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-2 bg-amber-500/20 rounded-lg">
-                <Award className="w-6 h-6 text-amber-500" />
+                <Target className="w-6 h-6 text-amber-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Série Actuelle</p>
-                <p className="text-2xl font-bold">{totalStats?.streak || 0} jours</p>
+                <p className="text-sm text-muted-foreground">Tâches Aujourd'hui</p>
+                <p className="text-2xl font-bold">{streak?.tasks_completed_today || 0}/3</p>
               </div>
             </div>
           </CardContent>
@@ -113,67 +163,131 @@ export const StatsSection = () => {
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-2 bg-emerald-500/20 rounded-lg">
-                <Target className="w-6 h-6 text-emerald-500" />
+                <Clock className="w-6 h-6 text-emerald-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Taux de Complétion</p>
-                <p className="text-2xl font-bold">{totalStats?.completion || 0}%</p>
+                <p className="text-sm text-muted-foreground">Dernière Activité</p>
+                <p className="text-2xl font-bold">
+                  {streak?.last_activity_date ? new Date(streak.last_activity_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '-'}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Progression Hebdomadaire</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyStats} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip 
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="rounded-lg border bg-background p-2 shadow-sm">
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="flex flex-col">
-                              <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                XP
-                              </span>
-                              <span className="font-bold text-muted-foreground">
-                                {payload[0].value}
-                              </span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                Habitudes
-                              </span>
-                              <span className="font-bold text-muted-foreground">
-                                {payload[0].payload.count}
-                              </span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle>Progression Hebdomadaire</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyStats} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="day" />
+                  <YAxis />
+                  <Tooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="rounded-lg border bg-background p-2 shadow-sm">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  XP
+                                </span>
+                                <span className="font-bold text-muted-foreground">
+                                  {payload[0].value}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  Habitudes
+                                </span>
+                                <span className="font-bold text-muted-foreground">
+                                  {payload[0].payload.count}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar
-                  dataKey="xp"
-                  fill={chartConfig.xp.color}
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar
+                    dataKey="xp"
+                    fill={chartConfig.xp.color}
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle>Distribution par Catégorie</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryStats}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {categoryStats?.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="backdrop-blur-sm lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Activité par Heure</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={hourlyStats}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="hour" 
+                    tickFormatter={(hour) => `${hour}h`}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value) => [`${value} habitudes`, 'Complétées']}
+                    labelFormatter={(hour) => `${hour}h00`}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="count" 
+                    stroke="#9b87f5" 
+                    strokeWidth={2}
+                    dot={{ fill: '#9b87f5' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
