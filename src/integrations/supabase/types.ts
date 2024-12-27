@@ -107,6 +107,39 @@ export type Database = {
         }
         Relationships: []
       }
+      skins: {
+        Row: {
+          cost: number
+          created_at: string
+          description: string | null
+          id: string
+          preview_url: string | null
+          theme_colors: Json | null
+          title: string
+          type: string
+        }
+        Insert: {
+          cost?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          preview_url?: string | null
+          theme_colors?: Json | null
+          title: string
+          type: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          preview_url?: string | null
+          theme_colors?: Json | null
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       user_rewards: {
         Row: {
           id: string
@@ -129,6 +162,35 @@ export type Database = {
             columns: ["reward_id"]
             isOneToOne: false
             referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_skins: {
+        Row: {
+          id: string
+          is_active: boolean | null
+          purchased_at: string
+          skin_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean | null
+          purchased_at?: string
+          skin_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean | null
+          purchased_at?: string
+          skin_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_skins_skin_id_fkey"
+            columns: ["skin_id"]
+            isOneToOne: false
+            referencedRelation: "skins"
             referencedColumns: ["id"]
           },
         ]
