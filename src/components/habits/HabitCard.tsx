@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 
 interface Habit {
   id: string;
@@ -25,6 +26,28 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
   const queryClient = useQueryClient();
   const [isCompleted, setIsCompleted] = useState(false);
 
+  // Vérifier si l'habitude a déjà été complétée aujourd'hui
+  const { data: habitLog } = useQuery({
+    queryKey: ["habitLog", habit.id],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { data } = await supabase
+        .from("habit_logs")
+        .select("*")
+        .eq("habit_id", habit.id)
+        .gte("completed_at", `${today}T00:00:00`)
+        .lte("completed_at", `${today}T23:59:59`)
+        .maybeSingle();
+      
+      return data;
+    },
+  });
+
+  // Mettre à jour l'état local en fonction des données de la base de données
+  useEffect(() => {
+    setIsCompleted(!!habitLog);
+  }, [habitLog]);
+
   const handleComplete = async () => {
     try {
       // 1. Récupérer le nombre d'habitudes complétées aujourd'hui
@@ -44,7 +67,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
         .maybeSingle();
 
       if (!existingStreak) {
-        // Créer un nouvel enregistrement si aucun n'existe
         await supabase
           .from("user_streaks")
           .insert([{
@@ -54,7 +76,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
             longest_streak: tasksCompletedToday >= 3 ? 1 : 0
           }]);
       } else {
-        // Mettre à jour l'enregistrement existant
         const lastActivityDate = existingStreak.last_activity_date;
         const isNewDay = lastActivityDate !== today;
         
@@ -62,20 +83,15 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
         let newLongestStreak = existingStreak.longest_streak;
 
         if (isNewDay) {
-          // Si c'est un nouveau jour, on vérifie si hier on avait complété au moins 3 tâches
           if (existingStreak.tasks_completed_today >= 3) {
-            // On garde la série en cours
             if (tasksCompletedToday >= 3) {
-              // Si on a déjà 3 tâches aujourd'hui, on incrémente la série
               newCurrentStreak += 1;
               newLongestStreak = Math.max(newCurrentStreak, existingStreak.longest_streak);
             }
           } else {
-            // On a raté hier, on remet à zéro sauf si on atteint 3 tâches aujourd'hui
             newCurrentStreak = tasksCompletedToday >= 3 ? 1 : 0;
           }
         } else {
-          // Même jour, on met à jour uniquement si on atteint 3 tâches
           if (tasksCompletedToday >= 3 && existingStreak.tasks_completed_today < 3) {
             newCurrentStreak = existingStreak.current_streak + 1;
             newLongestStreak = Math.max(newCurrentStreak, existingStreak.longest_streak);
@@ -113,6 +129,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
       queryClient.invalidateQueries({ queryKey: ["totalXP"] });
       queryClient.invalidateQueries({ queryKey: ["userStreak"] });
       queryClient.invalidateQueries({ queryKey: ["weeklyStats"] });
+      queryClient.invalidateQueries({ queryKey: ["habitLog", habit.id] });
 
       toast({
         title: "Bravo !",
