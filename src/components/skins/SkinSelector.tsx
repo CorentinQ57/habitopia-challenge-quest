@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
 export const SkinSelector = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
@@ -34,11 +34,11 @@ export const SkinSelector = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     try {
       setIsUpdating(true);
 
-      // Désactiver tous les skins sans condition
+      // Désactiver tous les skins
       const { error: deactivateError } = await supabase
         .from("user_skins")
         .update({ is_active: false })
-        .not('id', 'is', null); // This ensures we update all rows
+        .not('id', 'is', null);
 
       if (deactivateError) throw deactivateError;
 
@@ -74,9 +74,12 @@ export const SkinSelector = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Choisir un skin</DialogTitle>
+          <DialogDescription>
+            Sélectionnez un skin pour votre personnage parmi ceux que vous possédez.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4 py-4">
           {userSkins?.map((userSkin) => (
@@ -84,7 +87,11 @@ export const SkinSelector = ({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               key={userSkin.id}
               onClick={() => activateSkin(userSkin.skin.id)}
               disabled={isUpdating}
-              className="relative overflow-hidden rounded-lg border bg-card hover:bg-accent transition-colors"
+              className={`
+                relative overflow-hidden rounded-lg border bg-card 
+                hover:bg-accent transition-colors
+                ${userSkin.is_active ? 'ring-2 ring-primary' : ''}
+              `}
             >
               {userSkin.skin.preview_url && (
                 <img
