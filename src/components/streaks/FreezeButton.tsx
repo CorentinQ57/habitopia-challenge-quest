@@ -1,51 +1,38 @@
 import { Snowflake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface FreezeButtonProps {
   freezeTokens: number;
-  onUseFreeze: () => Promise<void>;
+  onUseFreeze: () => void;
 }
 
 export const FreezeButton = ({ freezeTokens, onUseFreeze }: FreezeButtonProps) => {
-  if (freezeTokens <= 0) return null;
-
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
+    <Tooltip>
+      <TooltipTrigger asChild>
         <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/20"
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={onUseFreeze}
+          disabled={freezeTokens <= 0}
         >
-          <Snowflake className="w-4 h-4 text-blue-500" />
-          <span className="text-blue-500">Utiliser un glaçon ({freezeTokens})</span>
+          <Snowflake className="w-5 h-5 text-blue-500" />
+          {freezeTokens > 0 && (
+            <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+              {freezeTokens}
+            </span>
+          )}
         </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Utiliser un glaçon ?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Votre série sera gelée pour aujourd'hui. Vous ne perdrez pas votre progression même si vous ne complétez pas vos tâches.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <AlertDialogAction onClick={onUseFreeze}>
-            Utiliser
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Geler votre série ({freezeTokens} disponible{freezeTokens !== 1 ? 's' : ''})</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };

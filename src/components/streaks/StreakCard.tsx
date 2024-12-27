@@ -50,7 +50,7 @@ export const StreakCard = () => {
         const lastActivityDate = new Date(currentStreak.last_activity_date);
         const todayDate = new Date(today);
         
-        // If last activity was yesterday, increment streak
+        // If last activity was today, increment streak
         if (lastActivityDate.getTime() === todayDate.getTime()) {
           const newCurrentStreak = currentStreak.current_streak + 1;
           const newLongestStreak = Math.max(newCurrentStreak, currentStreak.longest_streak);
