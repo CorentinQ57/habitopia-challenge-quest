@@ -152,4 +152,28 @@
   [data-sidebar="tooltip"] {
     @apply animate-in fade-in zoom-in-95 duration-200;
   }
+
+  /* Animation de fond pour la page de connexion */
+  .animated-background {
+    background: linear-gradient(135deg, #a8c0ff, #3f2b96);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+    position: absolute;
+    inset: -20px;
+    border-radius: 24px;
+    filter: blur(24px);
+    z-index: 0;
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
 }
