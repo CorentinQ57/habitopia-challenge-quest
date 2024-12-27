@@ -60,9 +60,16 @@ export const RewardShop = () => {
     }
 
     try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       const { error: purchaseError } = await supabase
         .from("user_rewards")
-        .insert([{ reward_id: reward.id }]);
+        .insert([{ 
+          reward_id: reward.id,
+          user_id: user.id // Add the user_id here
+        }]);
 
       if (purchaseError) throw purchaseError;
 
@@ -79,7 +86,7 @@ export const RewardShop = () => {
           .update({ 
             freeze_tokens: (streakData?.freeze_tokens || 0) + 1
           })
-          .not("id", "is", null);
+          .not("id", 'is', null);
 
         if (freezeError) throw freezeError;
       }
