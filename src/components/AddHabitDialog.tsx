@@ -40,6 +40,7 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [experiencePoints, setExperiencePoints] = useState("10");
+  const [habitType, setHabitType] = useState("good");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -68,8 +69,9 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
           title,
           description,
           category,
-          experience_points: parseInt(experiencePoints),
+          experience_points: parseInt(experiencePoints) * (habitType === 'bad' ? -1 : 1),
           user_id: user?.id,
+          habit_type: habitType,
         },
       ]);
 
@@ -85,6 +87,7 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
       setDescription("");
       setCategory("");
       setExperiencePoints("10");
+      setHabitType("good");
       queryClient.invalidateQueries({ queryKey: ["habits"] });
     } catch (error) {
       toast({
@@ -147,6 +150,18 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
               />
             </div>
             <div className="grid gap-2">
+              <Label htmlFor="habitType">Type d'habitude</Label>
+              <Select value={habitType} onValueChange={setHabitType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionnez le type d'habitude" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="good">Bonne habitude</SelectItem>
+                  <SelectItem value="bad">Mauvaise habitude</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="category">Catégorie</Label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger>
@@ -168,7 +183,7 @@ export const AddHabitDialog = ({ variant = "button" }: AddHabitDialogProps) => {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="experiencePoints">Points d'expérience</Label>
+              <Label htmlFor="experiencePoints">Points d'expérience {habitType === 'bad' ? '(négatifs)' : ''}</Label>
               <Input
                 id="experiencePoints"
                 type="number"

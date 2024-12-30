@@ -9,6 +9,7 @@ import { ExperiencePoints } from "./ExperiencePoints";
 import { HabitCardHeader } from "./HabitCardHeader";
 import { HabitCardActions } from "./HabitCardActions";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface Habit {
   id: string;
@@ -19,6 +20,7 @@ interface Habit {
   is_popular: boolean;
   created_at: string;
   experience_points: number;
+  habit_type: 'good' | 'bad';
 }
 
 interface HabitCardProps {
@@ -31,7 +33,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  // Vérifier si l'habitude a déjà été complétée aujourd'hui
   useEffect(() => {
     const checkIfCompleted = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -68,7 +69,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       const today = new Date().toISOString().split('T')[0];
 
-      // Vérifier si un glaçon a été utilisé aujourd'hui
       const { data: userStreak } = await supabase
         .from("user_streaks")
         .select("freeze_used_date, tasks_completed_today")
@@ -77,7 +77,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       const isStreakFrozen = userStreak?.freeze_used_date === today;
 
-      // Si un glaçon a été utilisé, on ne permet pas de descendre en dessous de 3 tâches
       if (isStreakFrozen && userStreak.tasks_completed_today <= 3) {
         toast({
           title: "Action impossible",
@@ -96,12 +95,10 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       const tasksCompletedToday = (habitsCompleted?.length || 1) - 1;
 
-      // Si un glaçon a été utilisé, on s'assure que tasks_completed_today ne descend pas en dessous de 3
       if (!isStreakFrozen) {
         await updateUserStreak(tasksCompletedToday);
       }
 
-      // Supprimer l'entrée du journal d'habitudes
       const { error: deleteError } = await supabase
         .from("habit_logs")
         .delete()
@@ -142,7 +139,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       const today = new Date().toISOString().split('T')[0];
       
-      // Vérifier si un glaçon a été utilisé aujourd'hui
       const { data: userStreak } = await supabase
         .from("user_streaks")
         .select("freeze_used_date")
@@ -151,7 +147,6 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
 
       const isStreakFrozen = userStreak?.freeze_used_date === today;
 
-      // Si un glaçon a été utilisé, on ne compte pas les habitudes pour la série
       if (!isStreakFrozen) {
         const { data: habitsCompleted } = await supabase
           .from("habit_logs")
@@ -170,7 +165,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
           habit_id: habit.id,
           user_id: user.id,
           experience_gained: habit.experience_points,
-          notes: `Habitude complétée: ${habit.title}`
+          notes: `Habitude ${habit.habit_type === 'good' ? 'complétée' : 'évitée'}: ${habit.title}`
         }]);
 
       if (habitError) throw habitError;
@@ -184,9 +179,13 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
       queryClient.invalidateQueries({ queryKey: ["weeklyStats"] });
       queryClient.invalidateQueries({ queryKey: ["habits"] });
 
+      const xpMessage = habit.habit_type === 'good' 
+        ? `+${habit.experience_points} points d'expérience gagnés !`
+        : `${habit.experience_points} points d'expérience perdus.`;
+
       toast({
-        title: "Bravo !",
-        description: `+${habit.experience_points} points d'expérience gagnés !`,
+        title: habit.habit_type === 'good' ? "Bravo !" : "Bien joué !",
+        description: xpMessage,
       });
     } catch (error) {
       toast({
@@ -197,28 +196,39 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
     }
   };
 
+  const cardClassName = cn(
+    "group relative transition-all duration-300 animate-fade-in backdrop-blur-sm flex flex-col h-[280px] noise",
+    {
+      'bg-white/90 hover:bg-stella-royal/5': !isCompleted && habit.habit_type === 'good',
+      'bg-habit-success/20 hover:bg-habit-success/30 order-last': isCompleted && habit.habit_type === 'good',
+      'bg-red-50/90 hover:bg-red-100/90': !isCompleted && habit.habit_type === 'bad',
+      'bg-red-200/20 hover:bg-red-200/30 order-last': isCompleted && habit.habit_type === 'bad',
+    }
+  );
+
+  const cardStyle = {
+    boxShadow: isCompleted
+      ? habit.habit_type === 'good'
+        ? "0 8px 32px 0 rgba(167, 243, 208, 0.2)"
+        : "0 8px 32px 0 rgba(254, 202, 202, 0.2)"
+      : "0 8px 32px 0 rgba(65, 105, 225, 0.1)",
+  };
+
   return (
     <>
-      <Card 
-        className={`group relative transition-all duration-300 animate-fade-in backdrop-blur-sm bg-white/90 flex flex-col h-[280px] noise
-          ${isCompleted ? 'bg-habit-success/20 hover:bg-habit-success/30 order-last' : 'hover:bg-stella-royal/5'}`}
-        style={{
-          boxShadow: isCompleted 
-            ? "0 8px 32px 0 rgba(167, 243, 208, 0.2)"
-            : "0 8px 32px 0 rgba(65, 105, 225, 0.1)",
-        }}
-      >
+      <Card className={cardClassName} style={cardStyle}>
         <HabitCardHeader 
           title={habit.title}
           description={habit.description}
           isPopular={habit.is_popular}
           isCompleted={isCompleted}
+          habitType={habit.habit_type}
         />
         
         <CardContent className="flex-1 flex flex-col justify-between gap-4 pt-0">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <CategoryBadge category={habit.category} />
-            <ExperiencePoints points={habit.experience_points} />
+            <ExperiencePoints points={habit.experience_points} type={habit.habit_type} />
           </div>
           
           <HabitCardActions 
@@ -226,6 +236,7 @@ export const HabitCard = ({ habit }: HabitCardProps) => {
             habitTitle={habit.title}
             isCompleted={isCompleted}
             onComplete={handleClick}
+            habitType={habit.habit_type}
           />
         </CardContent>
       </Card>

@@ -80,6 +80,7 @@ export type Database = {
           created_at: string
           description: string | null
           experience_points: number
+          habit_type: string
           icon: string | null
           id: string
           is_popular: boolean | null
@@ -90,7 +91,8 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
-          experience_points?: number
+          experience_points: number
+          habit_type?: string
           icon?: string | null
           id?: string
           is_popular?: boolean | null
@@ -102,6 +104,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           experience_points?: number
+          habit_type?: string
           icon?: string | null
           id?: string
           is_popular?: boolean | null
