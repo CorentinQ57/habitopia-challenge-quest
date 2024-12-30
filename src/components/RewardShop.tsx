@@ -7,6 +7,8 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetPortal,
+  SheetOverlay,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { RewardCard } from "./rewards/RewardCard";
@@ -92,35 +94,38 @@ export const RewardShop = () => {
         </Button>
       </SheetTrigger>
       
-      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto bg-gradient-to-br from-background/95 to-background/98 backdrop-blur-sm border-l-2 border-primary/20">
-        <SheetHeader className="space-y-4">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="flex items-center gap-3 text-2xl">
-              <ShoppingBag className="w-6 h-6 text-primary" />
-              Boutique de Récompenses
-            </SheetTitle>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
-                <Gem className="w-5 h-5 text-primary" />
-                <span className="font-semibold">{totalXP || 0} XP</span>
+      <SheetPortal>
+        <SheetOverlay className="fixed inset-0 z-50 bg-black/80" />
+        <SheetContent className="fixed inset-y-0 right-0 z-50 w-full sm:max-w-2xl overflow-y-auto bg-gradient-to-br from-background/95 to-background/98 backdrop-blur-sm border-l-2 border-primary/20">
+          <SheetHeader className="space-y-4">
+            <div className="flex items-center justify-between">
+              <SheetTitle className="flex items-center gap-3 text-2xl">
+                <ShoppingBag className="w-6 h-6 text-primary" />
+                Boutique de Récompenses
+              </SheetTitle>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
+                  <Gem className="w-5 h-5 text-primary" />
+                  <span className="font-semibold">{totalXP || 0} XP</span>
+                </div>
+                <AddRewardDialog />
               </div>
-              <AddRewardDialog />
             </div>
-          </div>
-        </SheetHeader>
+          </SheetHeader>
 
-        <div className="mt-8 space-y-4">
-          {rewards?.map((reward) => (
-            <RewardCard
-              key={reward.id}
-              reward={reward}
-              totalXP={totalXP || 0}
-              getLevelIcon={getLevelIcon}
-              getLevelColor={getLevelColor}
-            />
-          ))}
-        </div>
-      </SheetContent>
+          <div className="mt-8 space-y-4">
+            {rewards?.map((reward) => (
+              <RewardCard
+                key={reward.id}
+                reward={reward}
+                totalXP={totalXP || 0}
+                getLevelIcon={getLevelIcon}
+                getLevelColor={getLevelColor}
+              />
+            ))}
+          </div>
+        </SheetContent>
+      </SheetPortal>
     </Sheet>
   );
 };
