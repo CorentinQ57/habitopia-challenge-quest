@@ -142,8 +142,12 @@ export const RewardCard = ({ reward, totalXP, getLevelIcon, getLevelColor }: Rew
         <Button
           onClick={() => purchaseReward(reward, totalXP)}
           disabled={totalXP < reward.cost || isPurchasing || isOwned}
-          variant={isOwned ? "secondary" : totalXP >= reward.cost ? "default" : "outline"}
-          className="w-full bg-background/50 hover:bg-background/70"
+          variant={isOwned || totalXP < reward.cost ? "outline" : "default"}
+          className={`w-full ${
+            isOwned || totalXP < reward.cost
+              ? "bg-background/50 hover:bg-background/70"
+              : "bg-background/50 hover:bg-background/70"
+          }`}
         >
           {isOwned ? (
             "Déjà possédé"

@@ -97,7 +97,7 @@ export const RewardShop = () => {
           <div className="flex items-center justify-between">
             <SheetTitle className="flex items-center gap-3 text-2xl">
               <ShoppingBag className="w-6 h-6 text-primary" />
-              Boutique de Récompenses
+              Boutique
             </SheetTitle>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
