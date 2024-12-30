@@ -70,6 +70,7 @@ export default {
         poppins: ["Poppins", "sans-serif"],
         inter: ["Inter", "sans-serif"],
         nunito: ["Nunito Sans", "sans-serif"],
+        satoshi: ["Satoshi", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
