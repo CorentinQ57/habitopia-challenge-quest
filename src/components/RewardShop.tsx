@@ -79,9 +79,11 @@ export const RewardShop = () => {
           }}
         >
           <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-colors" />
-          <span className="relative flex items-center gap-2 text-stella-white">
-            <ShoppingBag className="w-5 h-5" />
-            Boutique
+          <span className="relative flex items-center justify-between w-full">
+            <span className="flex items-center gap-2 text-stella-white">
+              <ShoppingBag className="w-5 h-5" />
+              Boutique
+            </span>
             <div className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full text-sm">
               <Gem className="w-4 h-4" />
               <span>{totalXP || 0}</span>
