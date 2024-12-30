@@ -6,9 +6,16 @@ interface HabitCardActionsProps {
   habitTitle: string;
   isCompleted: boolean;
   onComplete: () => void;
+  habitType: 'good' | 'bad';
 }
 
-export const HabitCardActions = ({ habitId, habitTitle, isCompleted, onComplete }: HabitCardActionsProps) => {
+export const HabitCardActions = ({ 
+  habitId, 
+  habitTitle, 
+  isCompleted, 
+  onComplete,
+  habitType 
+}: HabitCardActionsProps) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="absolute top-3 right-3 z-10">

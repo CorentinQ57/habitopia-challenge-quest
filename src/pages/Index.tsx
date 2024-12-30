@@ -7,6 +7,18 @@ import { RewardShop } from "@/components/RewardShop";
 import { StatsSection } from "@/components/stats/StatsSection";
 import { StreakCard } from "@/components/streaks/StreakCard";
 
+interface Habit {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: string;
+  is_popular: boolean;
+  created_at: string;
+  experience_points: number;
+  habit_type: 'good' | 'bad';
+}
+
 const Index = () => {
   const { data: habits, isLoading } = useQuery({
     queryKey: ["habits"],
@@ -17,7 +29,7 @@ const Index = () => {
         .order("created_at", { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as Habit[];
     },
   });
 

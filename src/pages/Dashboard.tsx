@@ -7,6 +7,18 @@ import { StreakCard } from "@/components/streaks/StreakCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface Habit {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: string;
+  is_popular: boolean;
+  created_at: string;
+  experience_points: number;
+  habit_type: 'good' | 'bad';
+}
+
 const Dashboard = () => {
   const { data: habits, isLoading } = useQuery({
     queryKey: ["habits"],
@@ -17,7 +29,7 @@ const Dashboard = () => {
         .order("created_at", { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as Habit[];
     },
   });
 

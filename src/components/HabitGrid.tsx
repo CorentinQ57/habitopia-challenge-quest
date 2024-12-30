@@ -4,18 +4,7 @@ import { AddHabitDialog } from "./AddHabitDialog";
 import { LoadingHabitGrid } from "./habits/LoadingHabitGrid";
 import { CategoryFilter } from "./habits/CategoryFilter";
 import { HabitTypeFilter } from "./habits/HabitTypeFilter";
-
-interface Habit {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  category: string;
-  is_popular: boolean;
-  experience_points: number;
-  created_at: string;
-  habit_type: 'good' | 'bad';
-}
+import { Habit } from "@/types/habit";
 
 interface HabitGridProps {
   habits: Habit[] | undefined;
