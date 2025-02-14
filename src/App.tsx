@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -47,45 +48,24 @@ const App = () => {
                   <Routes>
                     <Route
                       path="/"
-                      element={
-                        session ? (
-                          <Dashboard />
-                        ) : (
-                          <Navigate to="/profil" replace />
-                        )
-                      }
+                      element={session ? <Dashboard /> : <Navigate to="/profil" />}
                     />
                     <Route
                       path="/habitudes"
-                      element={
-                        session ? (
-                          <Habits />
-                        ) : (
-                          <Navigate to="/profil" replace />
-                        )
-                      }
+                      element={session ? <Habits /> : <Navigate to="/profil" />}
                     />
                     <Route
                       path="/statistiques"
-                      element={
-                        session ? (
-                          <Statistics />
-                        ) : (
-                          <Navigate to="/profil" replace />
-                        )
-                      }
+                      element={session ? <Statistics /> : <Navigate to="/profil" />}
                     />
                     <Route
                       path="/personnage"
-                      element={
-                        session ? (
-                          <Character />
-                        ) : (
-                          <Navigate to="/profil" replace />
-                        )
-                      }
+                      element={session ? <Character /> : <Navigate to="/profil" />}
                     />
-                    <Route path="/profil" element={<Profile />} />
+                    <Route
+                      path="/profil"
+                      element={<Profile />}
+                    />
                   </Routes>
                 </div>
               </main>
