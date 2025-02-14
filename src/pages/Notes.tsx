@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const Notes = () => {
   const { toast } = useToast();
@@ -17,6 +17,8 @@ const Notes = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [content, setContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Récupérer la note pour la date sélectionnée
   const { data: note, isLoading } = useQuery({
@@ -89,6 +91,62 @@ const Notes = () => {
     },
   });
 
+  // Mutation pour générer du contenu avec l'IA
+  const generateMutation = useMutation({
+    mutationFn: async (prompt: string) => {
+      const response = await fetch("https://haodastqykbgflafrlfn.supabase.co/functions/v1/generate-note", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de la génération du contenu");
+      }
+
+      const data = await response.json();
+      return data.content;
+    },
+    onSuccess: (generatedContent) => {
+      setContent((prevContent) => {
+        if (prevContent) {
+          return prevContent + "\n\n" + generatedContent;
+        }
+        return generatedContent;
+      });
+      setAiPrompt("");
+      toast({
+        title: "Contenu généré",
+        description: "Le contenu a été ajouté à votre note",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer le contenu",
+        variant: "destructive",
+      });
+      console.error("Erreur lors de la génération:", error);
+    },
+  });
+
+  const handleGenerateContent = async () => {
+    if (!aiPrompt.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez entrer une demande pour l'IA",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsEditing(true);
+    await generateMutation.mutateAsync(aiPrompt);
+  };
+
   // Mettre à jour le contenu quand on change de date
   useEffect(() => {
     if (note) {
@@ -126,71 +184,110 @@ const Notes = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Note du {format(selectedDate, "d MMMM yyyy", { locale: fr })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : isEditing ? (
-              <div className="space-y-4">
-                <Textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Écrivez votre note ici..."
-                  className="min-h-[200px]"
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                Assistant IA
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Exemple: Aide-moi à résumer ma journée..."
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleGenerateContent();
+                    }
+                  }}
                 />
-                <div className="flex items-center gap-2 justify-end">
+                <Button 
+                  onClick={handleGenerateContent}
+                  disabled={generateMutation.isPending}
+                >
+                  {generateMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Génération...
+                    </>
+                  ) : (
+                    "Générer"
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                Note du {format(selectedDate, "d MMMM yyyy", { locale: fr })}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : isEditing ? (
+                <div className="space-y-4">
+                  <Textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Écrivez votre note ici..."
+                    className="min-h-[200px]"
+                  />
+                  <div className="flex items-center gap-2 justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsEditing(false);
+                        setContent(note?.content || "");
+                      }}
+                    >
+                      Annuler
+                    </Button>
+                    <Button
+                      onClick={() => mutation.mutate()}
+                      disabled={mutation.isPending}
+                    >
+                      {mutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sauvegarde...
+                        </>
+                      ) : (
+                        "Sauvegarder"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {note?.content ? (
+                    <div className="whitespace-pre-wrap">{note.content}</div>
+                  ) : (
+                    <p className="text-muted-foreground italic">
+                      Aucune note pour cette date
+                    </p>
+                  )}
                   <Button
-                    variant="outline"
                     onClick={() => {
-                      setIsEditing(false);
+                      setIsEditing(true);
                       setContent(note?.content || "");
                     }}
                   >
-                    Annuler
-                  </Button>
-                  <Button
-                    onClick={() => mutation.mutate()}
-                    disabled={mutation.isPending}
-                  >
-                    {mutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sauvegarde...
-                      </>
-                    ) : (
-                      "Sauvegarder"
-                    )}
+                    {note?.content ? "Modifier" : "Ajouter une note"}
                   </Button>
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {note?.content ? (
-                  <div className="whitespace-pre-wrap">{note.content}</div>
-                ) : (
-                  <p className="text-muted-foreground italic">
-                    Aucune note pour cette date
-                  </p>
-                )}
-                <Button
-                  onClick={() => {
-                    setIsEditing(true);
-                    setContent(note?.content || "");
-                  }}
-                >
-                  {note?.content ? "Modifier" : "Ajouter une note"}
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
