@@ -39,12 +39,11 @@ export const AuthUI = () => {
     });
 
     // Écoute les changements d'état d'authentification
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' && view === 'sign_in') {
         navigate('/');
-      } else if (event === 'PASSWORD_RECOVERY') {
-        setView('update_password');
-      } else if (event === 'PASSWORD_RECOVERY_COMPLETED') {
+      } else if (event === 'USER_UPDATED' && view === 'update_password') {
+        // L'utilisateur a mis à jour son mot de passe avec succès
         navigate('/profil');
       }
     });
