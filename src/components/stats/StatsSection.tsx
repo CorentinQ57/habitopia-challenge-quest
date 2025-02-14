@@ -17,10 +17,11 @@ interface CategoryStatsType {
   value: number;
 }
 
+// Type correspondant à la structure réelle retournée par Supabase
 interface HabitLogWithHabit {
   habit: {
     category: string | null;
-  } | null;
+  };
 }
 
 export const StatsSection = () => {
@@ -59,13 +60,20 @@ export const StatsSection = () => {
   const { data: categoryStats } = useQuery<CategoryStatsType[]>({
     queryKey: ["categoryStats"],
     queryFn: async () => {
-      const { data: habits, error } = await supabase
+      const { data, error } = await supabase
         .from("habit_logs")
-        .select("habit:habits(category)");
+        .select(`
+          habit:habits (
+            category
+          )
+        `);
       
       if (error) throw error;
 
-      const categories = (habits as HabitLogWithHabit[]).reduce((acc: Record<string, number>, log) => {
+      // Convertir d'abord en unknown pour éviter l'erreur de type
+      const habits = data as unknown as HabitLogWithHabit[];
+      
+      const categories = habits.reduce((acc: Record<string, number>, log) => {
         const category = log.habit?.category || 'Non catégorisé';
         acc[category] = (acc[category] || 0) + 1;
         return acc;
@@ -73,7 +81,7 @@ export const StatsSection = () => {
 
       const result: CategoryStatsType[] = Object.entries(categories).map(([name, value]) => ({
         name,
-        value: value as number
+        value
       }));
 
       return result;
