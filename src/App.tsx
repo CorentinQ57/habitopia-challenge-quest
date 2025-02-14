@@ -11,6 +11,7 @@ import Habits from "./pages/Habits";
 import Statistics from "./pages/Statistics";
 import Character from "./pages/Character";
 import Profile from "./pages/Profile";
+import Login from "./pages/Login";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 
@@ -48,23 +49,27 @@ const App = () => {
                   <Routes>
                     <Route
                       path="/"
-                      element={session ? <Dashboard /> : <Navigate to="/profil" />}
+                      element={session ? <Dashboard /> : <Navigate to="/connexion" />}
                     />
                     <Route
                       path="/habitudes"
-                      element={session ? <Habits /> : <Navigate to="/profil" />}
+                      element={session ? <Habits /> : <Navigate to="/connexion" />}
                     />
                     <Route
                       path="/statistiques"
-                      element={session ? <Statistics /> : <Navigate to="/profil" />}
+                      element={session ? <Statistics /> : <Navigate to="/connexion" />}
                     />
                     <Route
                       path="/personnage"
-                      element={session ? <Character /> : <Navigate to="/profil" />}
+                      element={session ? <Character /> : <Navigate to="/connexion" />}
                     />
                     <Route
                       path="/profil"
-                      element={<Profile />}
+                      element={session ? <Profile /> : <Navigate to="/connexion" />}
+                    />
+                    <Route
+                      path="/connexion"
+                      element={session ? <Navigate to="/" /> : <Login />}
                     />
                   </Routes>
                 </div>
