@@ -29,11 +29,11 @@ export const AuthUI = () => {
   }, [navigate]);
 
   return (
-    <div className="relative max-w-md mx-auto">
+    <div className="relative max-w-2xl mx-auto w-full px-4">
       <div className="animated-background absolute inset-0 opacity-30" />
       <Card className="relative bg-white/80 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle>Connexion</CardTitle>
+          <CardTitle className="text-2xl">Connexion</CardTitle>
         </CardHeader>
         <CardContent>
           <Auth
