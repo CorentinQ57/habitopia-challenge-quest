@@ -1,3 +1,4 @@
+
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,14 @@ export const AuthUI = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Vérifie si l'utilisateur est déjà connecté au chargement
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate('/');
+      }
+    });
+
+    // Écoute les changements d'état d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') {
         navigate('/');
