@@ -18,8 +18,8 @@ interface CategoryStatsType {
 }
 
 interface HabitLogWithHabit {
-  habits: {
-    category: string;
+  habit: {
+    category: string | null;
   } | null;
 }
 
@@ -65,16 +65,18 @@ export const StatsSection = () => {
       
       if (error) throw error;
 
-      const categories = (habits as any[]).reduce((acc: Record<string, number>, log) => {
+      const categories = (habits as HabitLogWithHabit[]).reduce((acc: Record<string, number>, log) => {
         const category = log.habit?.category || 'Non catégorisé';
         acc[category] = (acc[category] || 0) + 1;
         return acc;
       }, {});
 
-      return Object.entries(categories).map(([name, value]) => ({
+      const result: CategoryStatsType[] = Object.entries(categories).map(([name, value]) => ({
         name,
-        value
+        value: value as number
       }));
+
+      return result;
     },
   });
 
