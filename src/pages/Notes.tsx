@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,9 +26,9 @@ const Notes = () => {
         .from("daily_notes")
         .select("*")
         .eq("date", format(selectedDate, "yyyy-MM-dd"))
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") {
+      if (error) {
         throw error;
       }
 
@@ -39,15 +39,37 @@ const Notes = () => {
   // Mutation pour sauvegarder/mettre à jour une note
   const mutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from("daily_notes")
-        .upsert({
-          date: format(selectedDate, "yyyy-MM-dd"),
-          content,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-        });
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      const user_id = (await supabase.auth.getUser()).data.user?.id;
 
-      if (error) throw error;
+      // D'abord, vérifions si une note existe déjà
+      const { data: existingNote } = await supabase
+        .from("daily_notes")
+        .select("id")
+        .eq("date", dateStr)
+        .eq("user_id", user_id)
+        .maybeSingle();
+
+      if (existingNote) {
+        // Si la note existe, on la met à jour
+        const { error } = await supabase
+          .from("daily_notes")
+          .update({ content })
+          .eq("id", existingNote.id);
+
+        if (error) throw error;
+      } else {
+        // Si la note n'existe pas, on la crée
+        const { error } = await supabase
+          .from("daily_notes")
+          .insert({
+            date: dateStr,
+            content,
+            user_id,
+          });
+
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["note", format(selectedDate, "yyyy-MM-dd")] });
@@ -68,13 +90,13 @@ const Notes = () => {
   });
 
   // Mettre à jour le contenu quand on change de date
-  useState(() => {
+  useEffect(() => {
     if (note) {
       setContent(note.content);
     } else {
       setContent("");
     }
-  });
+  }, [note]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
