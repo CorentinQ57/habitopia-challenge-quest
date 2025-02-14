@@ -44,7 +44,7 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'Tu es un assistant qui aide à la rédaction de notes journalières. Génère du contenu pertinent et réfléchi en français basé sur la demande de l'utilisateur.'
+            content: "Tu es un assistant qui aide à la rédaction de notes journalières. Génère du contenu pertinent et réfléchi en français basé sur la demande de l'utilisateur."
           },
           { role: 'user', content: prompt }
         ],
