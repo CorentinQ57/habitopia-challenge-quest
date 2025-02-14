@@ -1,13 +1,11 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
-import { AuthUI } from "@/components/profile/AuthUI";
 import { LogOut, KeyRound, Mail, User } from "lucide-react";
 
 const Profile = () => {
@@ -16,71 +14,52 @@ const Profile = () => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState("");
-  const [showResetPassword, setShowResetPassword] = useState(false);
 
   useEffect(() => {
+    // Charger la session au montage du composant
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate('/connexion');
+        return;
+      }
       setSession(session);
+      loadProfile(session.user.id);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Écouter les changements de session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      
-      const events = {
-        'SIGNED_IN': {
-          title: "Connexion réussie",
-          description: "Vous êtes maintenant connecté."
-        },
-        'SIGNED_OUT': {
-          title: "Déconnexion",
-          description: "Vous avez été déconnecté."
-        },
-        'USER_UPDATED': {
-          title: "Profil mis à jour",
-          description: "Vos informations ont été mises à jour."
-        },
-        'PASSWORD_RECOVERY': {
-          title: "Réinitialisation du mot de passe",
-          description: "Un email de réinitialisation vous a été envoyé."
-        }
-      };
-
-      const event = events[_event];
-      if (event) {
-        toast(event);
+      if (!session) {
+        navigate('/connexion');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [toast]);
+  }, [navigate]);
 
-  const { refetch: refetchProfile } = useQuery({
-    queryKey: ["profile", session?.user?.id],
-    queryFn: async () => {
+  const loadProfile = async (userId) => {
+    try {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", session?.user?.id)
+        .eq("id", userId)
         .single();
 
-      if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger votre profil.",
-          variant: "destructive",
-        });
-        throw error;
-      }
-      
-      setUsername(data.username || "");
-      return data;
-    },
-    enabled: !!session?.user?.id,
-  });
+      if (error) throw error;
+      setUsername(data?.username || "");
+    } catch (error) {
+      console.error("Erreur lors du chargement du profil:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger votre profil.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const updateProfile = async () => {
+    if (!session?.user?.id) return;
+
     try {
       setLoading(true);
       const { error } = await supabase
@@ -89,27 +68,29 @@ const Profile = () => {
           username,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", session?.user?.id);
+        .eq("id", session.user.id);
 
       if (error) throw error;
+
       toast({
         title: "Profil mis à jour",
         description: "Vos informations ont été enregistrées avec succès.",
       });
-      refetchProfile();
     } catch (error) {
+      console.error("Erreur lors de la mise à jour du profil:", error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le profil.",
         variant: "destructive",
       });
-      console.error("Erreur lors de la mise à jour du profil:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleResetPassword = async () => {
+    if (!session?.user?.email) return;
+
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(session.user.email, {
         redirectTo: `${window.location.origin}/profil`,
@@ -122,6 +103,7 @@ const Profile = () => {
         description: "Vérifiez votre boîte mail pour réinitialiser votre mot de passe.",
       });
     } catch (error) {
+      console.error("Erreur lors de la réinitialisation du mot de passe:", error);
       toast({
         title: "Erreur",
         description: "Impossible d'envoyer l'email de réinitialisation.",
@@ -131,21 +113,22 @@ const Profile = () => {
   };
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate('/connexion');
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
       toast({
         title: "Erreur",
         description: "Impossible de vous déconnecter.",
         variant: "destructive",
       });
-      console.error("Erreur lors de la déconnexion:", error);
-    } else {
-      navigate("/profil");
     }
   };
 
   if (!session) {
-    return <AuthUI />;
+    return null;
   }
 
   return (
