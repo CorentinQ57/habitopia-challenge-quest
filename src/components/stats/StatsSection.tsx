@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StatsCards } from "./StatsCards";
@@ -52,7 +53,7 @@ export const StatsSection = () => {
   const { data: categoryStats } = useQuery<CategoryStatsType[]>({
     queryKey: ["categoryStats"],
     queryFn: async () => {
-      const { data: logs, error } = await supabase
+      const { data: habits, error } = await supabase
         .from("habit_logs")
         .select(`
           habits (
@@ -62,7 +63,7 @@ export const StatsSection = () => {
       
       if (error) throw error;
 
-      const categories = logs.reduce((acc: Record<string, number>, log) => {
+      const categories = habits.reduce((acc: Record<string, number>, log) => {
         const category = log.habits?.category || 'Non catégorisé';
         acc[category] = (acc[category] || 0) + 1;
         return acc;
