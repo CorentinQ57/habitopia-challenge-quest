@@ -1,4 +1,4 @@
-import { LayoutDashboard, ListCheck, BarChart, UserRound, LogOut, Sparkles, User } from "lucide-react";
+import { LayoutDashboard, ListCheck, BarChart, UserRound, LogOut, Sparkles, User, BookText } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -36,6 +36,11 @@ const menuItems = [
     title: "Personnage",
     url: "/personnage",
     icon: UserRound,
+  },
+  {
+    title: "Notes",
+    url: "/notes",
+    icon: BookText,
   },
   {
     title: "Profil",
