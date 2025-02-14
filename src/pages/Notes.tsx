@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +19,6 @@ const Notes = () => {
   const [content, setContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
 
   // Récupérer la note pour la date sélectionnée
   const { data: note, isLoading } = useQuery({
@@ -38,67 +38,17 @@ const Notes = () => {
     },
   });
 
-  // Mutation pour sauvegarder/mettre à jour une note
-  const mutation = useMutation({
-    mutationFn: async () => {
-      const dateStr = format(selectedDate, "yyyy-MM-dd");
-      const user_id = (await supabase.auth.getUser()).data.user?.id;
-
-      // D'abord, vérifions si une note existe déjà
-      const { data: existingNote } = await supabase
-        .from("daily_notes")
-        .select("id")
-        .eq("date", dateStr)
-        .eq("user_id", user_id)
-        .maybeSingle();
-
-      if (existingNote) {
-        // Si la note existe, on la met à jour
-        const { error } = await supabase
-          .from("daily_notes")
-          .update({ content })
-          .eq("id", existingNote.id);
-
-        if (error) throw error;
-      } else {
-        // Si la note n'existe pas, on la crée
-        const { error } = await supabase
-          .from("daily_notes")
-          .insert({
-            date: dateStr,
-            content,
-            user_id,
-          });
-
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["note", format(selectedDate, "yyyy-MM-dd")] });
-      setIsEditing(false);
-      toast({
-        title: "Note sauvegardée",
-        description: "Votre note a été enregistrée avec succès.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur",
-        description: "Impossible de sauvegarder la note.",
-        variant: "destructive",
-      });
-      console.error("Erreur lors de la sauvegarde de la note:", error);
-    },
-  });
-
   // Mutation pour générer du contenu avec l'IA
   const generateMutation = useMutation({
     mutationFn: async (prompt: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Non authentifié");
+
       const response = await fetch("https://haodastqykbgflafrlfn.supabase.co/functions/v1/generate-note", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ prompt }),
       });
@@ -126,10 +76,61 @@ const Notes = () => {
     onError: (error) => {
       toast({
         title: "Erreur",
-        description: "Impossible de générer le contenu",
+        description: "Impossible de générer le contenu. Veuillez vérifier que vous êtes connecté.",
         variant: "destructive",
       });
       console.error("Erreur lors de la génération:", error);
+    },
+  });
+
+  // Mutation pour sauvegarder/mettre à jour une note
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Non authentifié");
+
+      const { data: existingNote } = await supabase
+        .from("daily_notes")
+        .select("id")
+        .eq("date", dateStr)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingNote) {
+        const { error } = await supabase
+          .from("daily_notes")
+          .update({ content })
+          .eq("id", existingNote.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("daily_notes")
+          .insert({
+            date: dateStr,
+            content,
+            user_id: user.id,
+          });
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["note", format(selectedDate, "yyyy-MM-dd")] });
+      setIsEditing(false);
+      toast({
+        title: "Note sauvegardée",
+        description: "Votre note a été enregistrée avec succès.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder la note.",
+        variant: "destructive",
+      });
+      console.error("Erreur lors de la sauvegarde de la note:", error);
     },
   });
 
