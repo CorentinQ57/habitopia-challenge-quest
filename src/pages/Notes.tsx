@@ -54,7 +54,8 @@ const Notes = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Erreur lors de la génération du contenu");
+        const error = await response.json();
+        throw new Error(error.error || "Erreur lors de la génération du contenu");
       }
 
       const data = await response.json();
