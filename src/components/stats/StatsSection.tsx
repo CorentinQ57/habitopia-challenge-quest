@@ -19,8 +19,8 @@ interface CategoryStatsType {
 
 interface HabitLogWithHabit {
   habits: {
-    category: string;
-  } | null;
+    category: string | null;
+  }[];
 }
 
 export const StatsSection = () => {
@@ -70,7 +70,7 @@ export const StatsSection = () => {
       if (error) throw error;
 
       const categories = (data as HabitLogWithHabit[]).reduce((acc: Record<string, number>, log) => {
-        const category = log.habits?.category || 'Non catégorisé';
+        const category = log.habits[0]?.category || 'Non catégorisé';
         acc[category] = (acc[category] || 0) + 1;
         return acc;
       }, {});
