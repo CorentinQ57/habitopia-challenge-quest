@@ -262,7 +262,7 @@ const Notes = () => {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Écrivez votre note ici..."
-                  className="min-h-[400px]" {/* Augmentation de la hauteur du textarea */}
+                  className="min-h-[400px]"
                 />
                 <div className="flex items-center gap-2 justify-end">
                   <Button
