@@ -12,6 +12,23 @@ export const PlayerStats = () => {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
 
+  // Récupérer l'XP totale pour calculer le niveau
+  const { data: totalXP } = useQuery({
+    queryKey: ["totalXP"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+
+      const { data, error } = await supabase
+        .from("habit_logs")
+        .select("experience_gained")
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      return data.reduce((sum, log) => sum + log.experience_gained, 0);
+    },
+  });
+
   // Récupérer les stats du joueur
   const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ["playerStats"],
@@ -33,10 +50,10 @@ export const PlayerStats = () => {
   // Mettre à jour une stat
   const updateStat = async (field: 'strength_points' | 'health_points') => {
     try {
-      if (!stats || stats.available_xp < 100) {
+      if (availablePoints <= 0) {
         toast({
-          title: "Points insuffisants",
-          description: "Il vous faut 100 points d'XP pour augmenter une caractéristique",
+          title: "Impossible d'augmenter",
+          description: "Vous n'avez plus de points disponibles",
           variant: "destructive",
         });
         return;
@@ -48,10 +65,7 @@ export const PlayerStats = () => {
 
       const { error } = await supabase
         .from("player_stats")
-        .update({ 
-          [field]: (stats?.[field] || 0) + 1,
-          available_xp: stats.available_xp - 100
-        })
+        .update({ [field]: (stats?.[field] || 0) + 1 })
         .eq('user_id', user.id);
 
       if (error) throw error;
@@ -75,6 +89,12 @@ export const PlayerStats = () => {
       setIsLoading(false);
     }
   };
+
+  // Calculer le niveau et les points disponibles
+  const level = Math.floor((totalXP || 0) / 100) + 1;
+  const totalPoints = level * 5; // 5 points par niveau
+  const usedPoints = (stats?.strength_points || 0) + (stats?.health_points || 0);
+  const availablePoints = totalPoints - usedPoints;
   
   // Stats de base niveau 1
   const baseStrength = 20;
@@ -89,9 +109,7 @@ export const PlayerStats = () => {
       <div className="flex justify-between items-center">
         <h3 className="font-semibold text-lg">Caractéristiques</h3>
         <span className="text-sm">
-          XP disponible: <span className="font-medium">{stats?.available_xp || 0}</span>
-          <br/>
-          <span className="text-xs text-muted-foreground">(Coût: 100 XP / point)</span>
+          Points disponibles: <span className="font-medium">{availablePoints}</span>
         </span>
       </div>
       
@@ -105,7 +123,7 @@ export const PlayerStats = () => {
             variant="outline" 
             className="w-full" 
             onClick={() => updateStat('strength_points')}
-            disabled={isLoading || !stats || stats.available_xp < 100}
+            disabled={isLoading || availablePoints <= 0}
           >
             <Plus className="w-4 h-4 mr-2" />
             Augmenter ({stats?.strength_points || 0})
@@ -121,7 +139,7 @@ export const PlayerStats = () => {
             variant="outline" 
             className="w-full" 
             onClick={() => updateStat('health_points')}
-            disabled={isLoading || !stats || stats.available_xp < 100}
+            disabled={isLoading || availablePoints <= 0}
           >
             <Plus className="w-4 h-4 mr-2" />
             Augmenter ({stats?.health_points || 0})
