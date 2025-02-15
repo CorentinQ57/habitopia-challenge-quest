@@ -10,6 +10,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Fonction pour nettoyer la réponse de l'IA des blocs de code markdown
+const cleanAIResponse = (response: string): string => {
+  // Enlever les blocs de code markdown ```json et ```
+  response = response.replace(/```json\n/g, '').replace(/```\n/g, '').replace(/```/g, '');
+  
+  // Nettoyer les espaces et retours à la ligne en trop
+  response = response.trim();
+  
+  return response;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -40,7 +51,9 @@ serve(async (req) => {
         {
           "toCreate": [{habit object}],
           "toDelete": ["habit title"]
-        }`
+        }
+        
+        NE PAS ajouter de blocs de code markdown (pas de \`\`\`json).`
       },
       {
         role: 'user',
@@ -68,12 +81,27 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const actions = JSON.parse(data.choices[0].message.content);
+    const cleanedResponse = cleanAIResponse(data.choices[0].message.content);
+    
+    try {
+      const actions = JSON.parse(cleanedResponse);
 
-    return new Response(JSON.stringify(actions), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+      // Valider la structure de la réponse
+      if (!actions.toCreate || !Array.isArray(actions.toCreate) || !actions.toDelete || !Array.isArray(actions.toDelete)) {
+        throw new Error('Invalid response format');
+      }
+
+      return new Response(JSON.stringify(actions), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (parseError) {
+      console.error('Parse error:', parseError);
+      console.error('Raw response:', data.choices[0].message.content);
+      console.error('Cleaned response:', cleanedResponse);
+      throw new Error('Failed to parse AI response');
+    }
   } catch (error) {
+    console.error('Error in generate-habits function:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
