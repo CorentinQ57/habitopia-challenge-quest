@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 export const PlayerStats = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   // Récupérer l'XP totale pour calculer le niveau
   const { data: totalXP } = useQuery({
@@ -69,7 +70,10 @@ export const PlayerStats = () => {
 
       if (error) throw error;
 
+      // Rafraîchir à la fois les stats du joueur et dans GameScene
+      await queryClient.invalidateQueries({ queryKey: ["playerStats"] });
       await refetchStats();
+      
       toast({
         title: "Statistiques mises à jour",
         description: field === 'strength_points' ? "Force augmentée!" : "Points de vie augmentés!",
