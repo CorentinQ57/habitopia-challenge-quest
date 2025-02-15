@@ -1,5 +1,7 @@
+
 import { CharacterCard } from "@/components/CharacterCard";
 import { SkinShop } from "@/components/skins/SkinShop";
+import { GameScene } from "@/components/game/GameScene";
 
 const Character = () => {
   return (
@@ -10,6 +12,8 @@ const Character = () => {
         <CharacterCard />
         <SkinShop />
       </div>
+      
+      <GameScene />
     </div>
   );
 };
