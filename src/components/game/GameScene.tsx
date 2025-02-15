@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -45,12 +44,32 @@ export const GameScene = () => {
     },
   });
 
+  const { data: playerStats } = useQuery({
+    queryKey: ["playerStats"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from("player_stats")
+        .select("*")
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const level = Math.floor((totalXP || 0) / 100) + 1;
   const baseSpeed = 1;
   const playerSpeed = baseSpeed * (1 + (level - 1) * 0.1);
-  const maxPlayerHealth = 100 + (level - 1) * 20;
-  const playerBaseDamage = 20; // Dommages de base fixes
-  const playerDamage = playerBaseDamage + (level - 1) * 10; // Augmente de 10 par niveau
+  
+  // Stats de base + bonus des points investis
+  const baseStrength = 20;
+  const baseHealth = 100;
+  const playerDamage = baseStrength + (playerStats?.strength_points || 0) * 10;
+  const maxPlayerHealth = baseHealth + (playerStats?.health_points || 0) * 20;
 
   // Réinitialiser le jeu
   const resetGame = () => {
