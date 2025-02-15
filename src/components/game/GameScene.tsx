@@ -49,6 +49,8 @@ export const GameScene = () => {
   const baseSpeed = 1;
   const playerSpeed = baseSpeed * (1 + (level - 1) * 0.1);
   const maxPlayerHealth = 100 + (level - 1) * 20;
+  const playerBaseDamage = 20; // Dommages de base fixes
+  const playerDamage = playerBaseDamage + (level - 1) * 10; // Augmente de 10 par niveau
 
   // Réinitialiser le jeu
   const resetGame = () => {
@@ -76,11 +78,11 @@ export const GameScene = () => {
   const fightMonster = () => {
     if (!currentMonster || !isInCombat) return;
 
-    const playerDamage = 10 + Math.floor(level * 1.5);
+    // Le joueur inflige des dégâts fixes basés sur son niveau
     const newMonsterHealth = currentMonster.health - playerDamage;
 
-    // Le monstre devient plus fort avec le nombre de monstres vaincus
-    const monsterDamage = Math.max(5, Math.floor(currentMonster.power * (0.8 + monstersDefeated * 0.1)));
+    // Le monstre inflige des dégâts basés sur sa puissance
+    const monsterDamage = Math.floor(currentMonster.power * 0.8);
     const newPlayerHealth = Math.max(0, playerHealth - monsterDamage);
     setPlayerHealth(newPlayerHealth);
 
@@ -95,7 +97,6 @@ export const GameScene = () => {
       setCurrentMonster(null);
       setIsInCombat(false);
       setMonstersDefeated(prev => prev + 1);
-      setPlayerHealth(prev => Math.min(maxPlayerHealth, prev + 20));
     } else {
       setCurrentMonster(prev => prev ? { ...prev, health: newMonsterHealth } : null);
     }
@@ -118,13 +119,17 @@ export const GameScene = () => {
     // Générer un nouveau monstre
     const spawnMonster = () => {
       if (!currentMonster && !isInCombat) {
-        const newMonster: Monster = {
-          // La puissance augmente avec le niveau et le nombre de monstres vaincus
-          power: Math.ceil(level * (0.8 + Math.random() * 0.4) * (1 + monstersDefeated * 0.2)),
-          position: canvas.width,
-          health: 50 + level * 10 + monstersDefeated * 20,
-        };
-        setCurrentMonster(newMonster);
+        const monsterLevel = monstersDefeated + 1;
+        
+        // Ne génère le monstre que si le joueur a le niveau requis
+        if (level >= monsterLevel) {
+          const newMonster: Monster = {
+            power: 20 + (monsterLevel - 1) * 15, // Puissance basée sur le niveau du monstre
+            position: canvas.width,
+            health: 100 + (monsterLevel - 1) * 50, // Points de vie basés sur le niveau du monstre
+          };
+          setCurrentMonster(newMonster);
+        }
       }
     };
 
@@ -184,10 +189,14 @@ export const GameScene = () => {
           }
         }
         
-        ctx.fillStyle = `hsl(${280 + currentMonster.power * 5}, 70%, 50%)`;
+        // La couleur du monstre reflète son niveau plutôt que sa puissance
+        const monsterLevel = monstersDefeated + 1;
+        ctx.fillStyle = `hsl(${280 + monsterLevel * 20}, 70%, 50%)`;
         ctx.fillRect(currentMonster.position, 130, 40, 50);
 
-        const monsterHealthPercent = (currentMonster.health / (50 + level * 10 + monstersDefeated * 20)) * 100;
+        // Barre de vie du monstre
+        const monsterMaxHealth = 100 + (monsterLevel - 1) * 50;
+        const monsterHealthPercent = (currentMonster.health / monsterMaxHealth) * 100;
         ctx.fillStyle = "#ef4444";
         ctx.fillRect(currentMonster.position, 120, 40 * (monsterHealthPercent / 100), 4);
       }
@@ -220,19 +229,27 @@ export const GameScene = () => {
     };
   }, [level, currentMonster, isInCombat, playerSpeed, monstersDefeated, playerHealth]);
 
+  const monsterLevel = monstersDefeated + 1;
+  const canFightNextMonster = level >= monsterLevel;
+
   return (
     <Card className="p-4">
       <div className="mb-4 flex flex-col gap-2">
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium">Niveau {level}</span>
           <span className="text-sm text-muted-foreground">
-            Vitesse: {playerSpeed.toFixed(1)}x
+            Dégâts: {playerDamage}
           </span>
         </div>
         <Progress value={(playerHealth / maxPlayerHealth) * 100} className="h-2" />
         <div className="flex justify-between items-center text-sm text-muted-foreground">
           <span>{playerHealth}/{maxPlayerHealth} PV</span>
-          <span>Monstres vaincus: {monstersDefeated}</span>
+          <span>
+            {canFightNextMonster 
+              ? `Monstres vaincus: ${monstersDefeated}`
+              : `Niveau ${monsterLevel} requis pour le prochain monstre`
+            }
+          </span>
         </div>
       </div>
       <canvas
