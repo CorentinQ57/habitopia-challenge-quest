@@ -11,12 +11,21 @@ interface Monster {
   health: number;
 }
 
+interface Cloud {
+  x: number;
+  y: number;
+  width: number;
+  speed: number;
+}
+
 export const GameScene = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [backgroundOffset, setBackgroundOffset] = useState(0);
   const [currentMonster, setCurrentMonster] = useState<Monster | null>(null);
   const [isInCombat, setIsInCombat] = useState(false);
   const [playerHealth, setPlayerHealth] = useState(100);
+  const [monstersDefeated, setMonstersDefeated] = useState(0);
+  const [clouds, setClouds] = useState<Cloud[]>([]);
   const animationFrameRef = useRef<number>();
 
   // Récupérer le niveau du joueur
@@ -37,27 +46,55 @@ export const GameScene = () => {
   });
 
   const level = Math.floor((totalXP || 0) / 100) + 1;
-  const baseSpeed = 1; // Vitesse de base du scrolling
-  const playerSpeed = baseSpeed * (1 + (level - 1) * 0.1); // Augmente de 10% par niveau
-  const maxPlayerHealth = 100 + (level - 1) * 20; // Augmente de 20 PV par niveau
+  const baseSpeed = 1;
+  const playerSpeed = baseSpeed * (1 + (level - 1) * 0.1);
+  const maxPlayerHealth = 100 + (level - 1) * 20;
+
+  // Réinitialiser le jeu
+  const resetGame = () => {
+    setPlayerHealth(maxPlayerHealth);
+    setCurrentMonster(null);
+    setIsInCombat(false);
+    setMonstersDefeated(0);
+  };
+
+  // Générer un nouveau nuage
+  const createCloud = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const newCloud: Cloud = {
+      x: canvas.width,
+      y: Math.random() * 100, // Position verticale aléatoire dans le ciel
+      width: 30 + Math.random() * 50, // Largeur aléatoire entre 30 et 80
+      speed: 0.5 + Math.random() * 0.5, // Vitesse aléatoire
+    };
+    setClouds(prev => [...prev, newCloud]);
+  };
 
   // Combat avec le monstre
   const fightMonster = () => {
     if (!currentMonster || !isInCombat) return;
 
-    // Le joueur attaque le monstre
     const playerDamage = 10 + Math.floor(level * 1.5);
     const newMonsterHealth = currentMonster.health - playerDamage;
 
-    // Le monstre contre-attaque
-    const monsterDamage = Math.max(5, Math.floor(currentMonster.power * 0.8));
-    setPlayerHealth(prev => Math.max(0, prev - monsterDamage));
+    // Le monstre devient plus fort avec le nombre de monstres vaincus
+    const monsterDamage = Math.max(5, Math.floor(currentMonster.power * (0.8 + monstersDefeated * 0.1)));
+    const newPlayerHealth = Math.max(0, playerHealth - monsterDamage);
+    setPlayerHealth(newPlayerHealth);
+
+    if (newPlayerHealth <= 0) {
+      // Mort du joueur
+      resetGame();
+      return;
+    }
 
     if (newMonsterHealth <= 0) {
       // Monstre vaincu
       setCurrentMonster(null);
       setIsInCombat(false);
-      // Régénération partielle de la vie
+      setMonstersDefeated(prev => prev + 1);
       setPlayerHealth(prev => Math.min(maxPlayerHealth, prev + 20));
     } else {
       setCurrentMonster(prev => prev ? { ...prev, health: newMonsterHealth } : null);
@@ -71,7 +108,6 @@ export const GameScene = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Ajuster la taille du canvas
     const resizeCanvas = () => {
       canvas.width = canvas.parentElement?.clientWidth || 800;
       canvas.height = 200;
@@ -83,17 +119,41 @@ export const GameScene = () => {
     const spawnMonster = () => {
       if (!currentMonster && !isInCombat) {
         const newMonster: Monster = {
-          power: Math.ceil(level * (0.8 + Math.random() * 0.4)),
+          // La puissance augmente avec le niveau et le nombre de monstres vaincus
+          power: Math.ceil(level * (0.8 + Math.random() * 0.4) * (1 + monstersDefeated * 0.2)),
           position: canvas.width,
-          health: 50 + level * 10,
+          health: 50 + level * 10 + monstersDefeated * 20,
         };
         setCurrentMonster(newMonster);
       }
     };
 
+    // Dessiner un nuage
+    const drawCloud = (cloud: Cloud) => {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.beginPath();
+      ctx.arc(cloud.x, cloud.y, cloud.width * 0.3, 0, Math.PI * 2);
+      ctx.arc(cloud.x + cloud.width * 0.2, cloud.y - cloud.width * 0.1, cloud.width * 0.25, 0, Math.PI * 2);
+      ctx.arc(cloud.x + cloud.width * 0.4, cloud.y, cloud.width * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
     // Animation principale
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Animer les nuages
+      setClouds(prevClouds => {
+        const updatedClouds = prevClouds
+          .map(cloud => ({
+            ...cloud,
+            x: cloud.x - cloud.speed - (playerSpeed * 0.5),
+          }))
+          .filter(cloud => cloud.x + cloud.width > 0);
+        
+        prevClouds.forEach(cloud => drawCloud(cloud));
+        return updatedClouds;
+      });
       
       // Dessiner le fond qui défile
       const groundPattern = ctx.createLinearGradient(0, 180, canvas.width, 180);
@@ -101,7 +161,6 @@ export const GameScene = () => {
       groundPattern.addColorStop(0.5, '#3a3a3a');
       groundPattern.addColorStop(1, '#2a2a2a');
       
-      // Dessiner les lignes de fond qui défilent
       ctx.fillStyle = groundPattern;
       ctx.fillRect(0, 180, canvas.width, 20);
       
@@ -119,23 +178,20 @@ export const GameScene = () => {
       // Dessiner le monstre actuel
       if (currentMonster) {
         if (!isInCombat) {
-          // Le monstre s'approche
           currentMonster.position -= 2;
           if (currentMonster.position <= playerX + 60) {
             setIsInCombat(true);
           }
         }
         
-        ctx.fillStyle = `hsl(${280 + currentMonster.power * 10}, 70%, 50%)`;
+        ctx.fillStyle = `hsl(${280 + currentMonster.power * 5}, 70%, 50%)`;
         ctx.fillRect(currentMonster.position, 130, 40, 50);
 
-        // Barre de vie du monstre
-        const monsterHealthPercent = (currentMonster.health / (50 + level * 10)) * 100;
+        const monsterHealthPercent = (currentMonster.health / (50 + level * 10 + monstersDefeated * 20)) * 100;
         ctx.fillStyle = "#ef4444";
         ctx.fillRect(currentMonster.position, 120, 40 * (monsterHealthPercent / 100), 4);
       }
 
-      // Faire défiler le fond si pas en combat
       if (!isInCombat && !currentMonster) {
         setBackgroundOffset(prev => (prev + playerSpeed) % canvas.width);
       }
@@ -143,13 +199,10 @@ export const GameScene = () => {
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
-    // Démarrer l'animation
     animate();
     
-    // Générer des monstres périodiquement
     const monsterInterval = setInterval(spawnMonster, 2000);
-
-    // Combat automatique
+    const cloudInterval = setInterval(createCloud, 3000);
     const combatInterval = setInterval(() => {
       if (isInCombat && currentMonster) {
         fightMonster();
@@ -162,9 +215,10 @@ export const GameScene = () => {
         cancelAnimationFrame(animationFrameRef.current);
       }
       clearInterval(monsterInterval);
+      clearInterval(cloudInterval);
       clearInterval(combatInterval);
     };
-  }, [level, currentMonster, isInCombat, playerSpeed]);
+  }, [level, currentMonster, isInCombat, playerSpeed, monstersDefeated, playerHealth]);
 
   return (
     <Card className="p-4">
@@ -176,9 +230,10 @@ export const GameScene = () => {
           </span>
         </div>
         <Progress value={(playerHealth / maxPlayerHealth) * 100} className="h-2" />
-        <span className="text-sm text-muted-foreground">
-          {playerHealth}/{maxPlayerHealth} PV
-        </span>
+        <div className="flex justify-between items-center text-sm text-muted-foreground">
+          <span>{playerHealth}/{maxPlayerHealth} PV</span>
+          <span>Monstres vaincus: {monstersDefeated}</span>
+        </div>
       </div>
       <canvas
         ref={canvasRef}
