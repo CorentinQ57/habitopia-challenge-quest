@@ -1,12 +1,9 @@
 
 import { useState } from "react";
-import { UserRound, Award, Plus, Swords } from "lucide-react";
+import { UserRound, Award, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SkinSelector } from "./skins/SkinSelector";
-import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
-import { PlayerStats } from "./game/PlayerStats";
-import { Button } from "./ui/button";
 
 export const CharacterCard = () => {
   const [isSkinSelectorOpen, setIsSkinSelectorOpen] = useState(false);
@@ -167,21 +164,6 @@ export const CharacterCard = () => {
               <span className="text-xl font-bold text-stella-white">{todayXP || 0}</span>
             </div>
           </div>
-
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="w-full bg-stella-white/10 border-stella-white/20 text-stella-white hover:bg-stella-white/20"
-              >
-                <Swords className="w-4 h-4 mr-2" />
-                Caractéristiques
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <PlayerStats />
-            </SheetContent>
-          </Sheet>
         </div>
       </div>
 
