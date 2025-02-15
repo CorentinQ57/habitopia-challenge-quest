@@ -37,13 +37,13 @@ export const usePurchaseReward = () => {
 
       // Si c'est un glaçon, d'abord vérifier l'existence de user_streaks
       if (reward.is_freeze_token) {
-        const { data: streakExists } = await supabase
+        const { data: userStreak } = await supabase
           .from("user_streaks")
-          .select("id")
+          .select("id, freeze_tokens")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (!streakExists) {
+        if (!userStreak) {
           // Créer l'entrée user_streaks si elle n'existe pas
           const { error: createStreakError } = await supabase
             .from("user_streaks")
@@ -59,11 +59,10 @@ export const usePurchaseReward = () => {
           if (createStreakError) throw createStreakError;
         } else {
           // Mettre à jour le nombre de jetons
+          const newFreezeTokens = (userStreak.freeze_tokens || 0) + 1;
           const { error: updateStreakError } = await supabase
             .from("user_streaks")
-            .update({
-              freeze_tokens: supabase.sql`freeze_tokens + 1`
-            })
+            .update({ freeze_tokens: newFreezeTokens })
             .eq("user_id", user.id);
 
           if (updateStreakError) throw updateStreakError;
