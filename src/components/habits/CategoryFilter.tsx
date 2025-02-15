@@ -1,7 +1,14 @@
+
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface CategoryFilterProps {
   selectedCategory: string | null;
@@ -33,58 +40,29 @@ export const CategoryFilter = ({ selectedCategory, onCategoryChange }: CategoryF
 
   if (!categories) return null;
 
-  const getContrastColor = (hexColor: string) => {
-    const r = parseInt(hexColor.slice(1, 3), 16);
-    const g = parseInt(hexColor.slice(3, 5), 16);
-    const b = parseInt(hexColor.slice(5, 7), 16);
-    
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    
-    return luminance > 0.5 ? "#000000" : "#FFFFFF";
-  };
-
-  const getCategoryStyles = (color: string) => {
-    const textColor = getContrastColor(color);
-    const baseColor = color + "40";
-    const hoverColor = color + "60";
-    const activeColor = color + "80";
-
-    return {
-      color: textColor,
-      backgroundColor: baseColor,
-      "--hover-bg": hoverColor,
-      "--active-bg": activeColor,
-    } as React.CSSProperties;
-  };
-
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button
-        variant="outline"
-        onClick={() => onCategoryChange(null)}
-        className={cn(
-          "backdrop-blur-sm border-gray-200/50 bg-gray-100 hover:bg-gray-200 text-gray-700",
-          !selectedCategory ? "ring-2 ring-offset-2 ring-stella-royal/20" : ""
-        )}
-      >
-        Toutes
-      </Button>
-
-      {categories.map((category) => (
-        <Button
-          key={category.name}
-          variant="outline"
-          onClick={() => onCategoryChange(category.name)}
-          className={cn(
-            "backdrop-blur-sm border-gray-200/50 transition-colors",
-            selectedCategory === category.name ? "ring-2 ring-offset-2 ring-stella-royal/20" : "",
-            "hover:bg-[var(--hover-bg)]"
-          )}
-          style={getCategoryStyles(category.color)}
-        >
-          {category.name}
-        </Button>
-      ))}
-    </div>
+    <Select value={selectedCategory || ""} onValueChange={(value) => onCategoryChange(value || null)}>
+      <SelectTrigger className="w-[180px] bg-white/50 backdrop-blur-sm">
+        <SelectValue placeholder="Toutes les catégories" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="">Toutes les catégories</SelectItem>
+        {categories.map((category) => (
+          <SelectItem
+            key={category.name}
+            value={category.name}
+            className="flex items-center gap-2"
+          >
+            <div className="flex items-center gap-2">
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: category.color }}
+              />
+              {category.name}
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 };
