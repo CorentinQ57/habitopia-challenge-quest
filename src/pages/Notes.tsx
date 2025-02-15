@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon, Loader2, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { WritingStyleManager } from "@/components/notes/WritingStyleManager";
 
 const Notes = () => {
   const { toast } = useToast();
@@ -19,6 +20,25 @@ const Notes = () => {
   const [content, setContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+
+  // Récupérer le style sélectionné
+  const { data: writingStyle } = useQuery({
+    queryKey: ["writing-style", selectedStyle],
+    queryFn: async () => {
+      if (!selectedStyle) return null;
+      
+      const { data, error } = await supabase
+        .from("writing_styles")
+        .select("prompt")
+        .eq("id", selectedStyle)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedStyle,
+  });
 
   // Récupérer la note pour la date sélectionnée
   const { data: note, isLoading } = useQuery({
@@ -30,10 +50,7 @@ const Notes = () => {
         .eq("date", format(selectedDate, "yyyy-MM-dd"))
         .maybeSingle();
 
-      if (error) {
-        throw error;
-      }
-
+      if (error) throw error;
       return data;
     },
   });
@@ -50,7 +67,10 @@ const Notes = () => {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ 
+          prompt,
+          systemPrompt: writingStyle?.prompt 
+        }),
       });
 
       if (!response.ok) {
@@ -195,6 +215,10 @@ const Notes = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <WritingStyleManager
+                selectedStyle={selectedStyle}
+                onStyleChange={setSelectedStyle}
+              />
               <div className="flex gap-2">
                 <Input
                   placeholder="Exemple: Aide-moi à résumer ma journée..."

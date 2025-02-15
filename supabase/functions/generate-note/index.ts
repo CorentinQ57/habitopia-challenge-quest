@@ -4,7 +4,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
-// Configuration des headers CORS
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -13,7 +12,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Gestion de la requête OPTIONS (CORS preflight)
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -22,16 +20,14 @@ serve(async (req) => {
   }
 
   try {
-    // Vérification de l'authentification
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Missing Authorization header');
     }
 
-    console.log('Auth header present:', !!authHeader);
-
-    const { prompt } = await req.json();
+    const { prompt, systemPrompt } = await req.json();
     console.log('Received prompt:', prompt);
+    console.log('System prompt:', systemPrompt);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -44,7 +40,7 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: "Tu es un assistant qui aide à la rédaction de notes journalières. Génère du contenu pertinent et réfléchi en français basé sur la demande de l'utilisateur."
+            content: systemPrompt || "Tu es un assistant qui aide à la rédaction de notes journalières. Génère du contenu pertinent et réfléchi en français basé sur la demande de l'utilisateur."
           },
           { role: 'user', content: prompt }
         ],

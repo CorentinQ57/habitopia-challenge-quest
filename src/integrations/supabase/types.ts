@@ -330,6 +330,33 @@ export type Database = {
         }
         Relationships: []
       }
+      writing_styles: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean | null
+          prompt: string
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          prompt: string
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          prompt?: string
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
