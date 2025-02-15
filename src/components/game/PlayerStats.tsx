@@ -11,6 +11,23 @@ export const PlayerStats = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Récupérer l'XP totale pour calculer le niveau
+  const { data: totalXP } = useQuery({
+    queryKey: ["totalXP"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+
+      const { data, error } = await supabase
+        .from("habit_logs")
+        .select("experience_gained")
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      return data.reduce((sum, log) => sum + log.experience_gained, 0);
+    },
+  });
+
   // Récupérer les stats du joueur
   const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ["playerStats"],
@@ -32,6 +49,15 @@ export const PlayerStats = () => {
   // Mettre à jour une stat
   const updateStat = async (field: 'strength_points' | 'health_points') => {
     try {
+      if (availablePoints <= 0) {
+        toast({
+          title: "Impossible d'augmenter",
+          description: "Vous n'avez plus de points disponibles",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -60,7 +86,13 @@ export const PlayerStats = () => {
     }
   };
 
-  // Base stats niveau 1
+  // Calculer le niveau et les points disponibles
+  const level = Math.floor((totalXP || 0) / 100) + 1;
+  const totalPoints = level * 5; // 5 points par niveau
+  const usedPoints = (stats?.strength_points || 0) + (stats?.health_points || 0);
+  const availablePoints = totalPoints - usedPoints;
+  
+  // Stats de base niveau 1
   const baseStrength = 20;
   const baseHealth = 100;
   
@@ -70,7 +102,12 @@ export const PlayerStats = () => {
 
   return (
     <Card className="p-4 space-y-4">
-      <h3 className="font-semibold text-lg">Caractéristiques</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="font-semibold text-lg">Caractéristiques</h3>
+        <span className="text-sm">
+          Points disponibles: <span className="font-medium">{availablePoints}</span>
+        </span>
+      </div>
       
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -82,7 +119,7 @@ export const PlayerStats = () => {
             variant="outline" 
             className="w-full" 
             onClick={() => updateStat('strength_points')}
-            disabled={isLoading}
+            disabled={isLoading || availablePoints <= 0}
           >
             <Plus className="w-4 h-4 mr-2" />
             Augmenter ({stats?.strength_points || 0})
@@ -98,7 +135,7 @@ export const PlayerStats = () => {
             variant="outline" 
             className="w-full" 
             onClick={() => updateStat('health_points')}
-            disabled={isLoading}
+            disabled={isLoading || availablePoints <= 0}
           >
             <Plus className="w-4 h-4 mr-2" />
             Augmenter ({stats?.health_points || 0})
