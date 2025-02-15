@@ -1,8 +1,6 @@
 
 import { CharacterCard } from "@/components/CharacterCard";
 import { SkinShop } from "@/components/skins/SkinShop";
-import { GameScene } from "@/components/game/GameScene";
-import { PlayerStats } from "@/components/game/PlayerStats";
 
 const Character = () => {
   return (
@@ -11,11 +9,8 @@ const Character = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <CharacterCard />
-        <PlayerStats />
         <SkinShop />
       </div>
-      
-      <GameScene />
     </div>
   );
 };
