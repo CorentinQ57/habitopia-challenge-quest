@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -186,8 +187,9 @@ const Notes = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
-        <div className="space-y-6">
+      <div className="space-y-8">
+        {/* Première rangée avec les deux cards côte à côte */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Card>
             <CardHeader>
               <CardTitle>Sélectionner une date</CardTitle>
@@ -242,6 +244,7 @@ const Notes = () => {
           </Card>
         </div>
 
+        {/* Deuxième rangée avec la card de contenu sur toute la largeur */}
         <Card>
           <CardHeader>
             <CardTitle>
@@ -259,7 +262,7 @@ const Notes = () => {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Écrivez votre note ici..."
-                  className="min-h-[200px]"
+                  className="min-h-[400px]" {/* Augmentation de la hauteur du textarea */}
                 />
                 <div className="flex items-center gap-2 justify-end">
                   <Button
@@ -289,7 +292,7 @@ const Notes = () => {
             ) : (
               <div className="space-y-4">
                 {note?.content ? (
-                  <div className="whitespace-pre-wrap">{note.content}</div>
+                  <div className="whitespace-pre-wrap min-h-[400px]">{note.content}</div>
                 ) : (
                   <p className="text-muted-foreground italic">
                     Aucune note pour cette date
