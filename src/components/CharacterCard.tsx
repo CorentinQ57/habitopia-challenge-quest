@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { UserRound, Award, Plus, Swords } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -31,19 +30,20 @@ export const CharacterCard = () => {
     },
   });
 
-  const { data: totalXP } = useQuery({
-    queryKey: ["totalXP"],
+  const { data: playerStats } = useQuery({
+    queryKey: ["playerStats"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return 0;
+      if (!user) return null;
 
       const { data, error } = await supabase
-        .from("habit_logs")
-        .select("experience_gained")
-        .eq('user_id', user.id);
+        .from("player_stats")
+        .select("level, available_xp")
+        .eq('user_id', user.id)
+        .maybeSingle();
       
       if (error) throw error;
-      return data.reduce((sum, log) => sum + log.experience_gained, 0);
+      return data;
     },
   });
 
@@ -67,16 +67,13 @@ export const CharacterCard = () => {
     return publicUrl;
   };
 
-  const calculateLevel = (xp: number) => {
-    return Math.floor(xp / 100) + 1;
+  const calculateProgress = (availableXp: number) => {
+    const nextLevelXp = 100;
+    return Math.min((availableXp % nextLevelXp), 100);
   };
 
-  const calculateProgress = (xp: number) => {
-    return (xp % 100);
-  };
-
-  const level = calculateLevel(totalXP || 0);
-  const progress = calculateProgress(totalXP || 0);
+  const progress = calculateProgress(playerStats?.available_xp || 0);
+  const level = playerStats?.level || 1;
 
   const { data: activeSkin } = useQuery({
     queryKey: ["activeSkin"],
@@ -155,8 +152,8 @@ export const CharacterCard = () => {
               <div className="absolute -top-3 -right-3">
                 <Award className="w-6 h-6 text-yellow-500" />
               </div>
-              <p className="text-sm text-stella-white/60 mb-1">XP Total</p>
-              <span className="text-xl font-bold text-stella-white">{totalXP || 0}</span>
+              <p className="text-sm text-stella-white/60 mb-1">XP Disponible</p>
+              <span className="text-xl font-bold text-stella-white">{playerStats?.available_xp || 0}</span>
             </div>
             
             <div className="relative p-4 rounded-lg bg-stella-white/5 backdrop-blur-sm border border-stella-white/10 transition-transform duration-300 hover:translate-y-[-2px]">

@@ -27,23 +27,6 @@ export const GameScene = () => {
   const [clouds, setClouds] = useState<Cloud[]>([]);
   const animationFrameRef = useRef<number>();
 
-  // Récupérer le niveau du joueur
-  const { data: totalXP } = useQuery({
-    queryKey: ["totalXP"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return 0;
-
-      const { data, error } = await supabase
-        .from("habit_logs")
-        .select("experience_gained")
-        .eq('user_id', user.id);
-      
-      if (error) throw error;
-      return data.reduce((sum, log) => sum + log.experience_gained, 0);
-    },
-  });
-
   const { data: playerStats } = useQuery({
     queryKey: ["playerStats"],
     queryFn: async () => {
@@ -61,13 +44,12 @@ export const GameScene = () => {
     },
   });
 
-  const level = Math.floor((totalXP || 0) / 100) + 1;
-  const baseSpeed = 1;
-  const playerSpeed = baseSpeed * (1 + (level - 1) * 0.1);
-  
-  // Stats de base + bonus des points investis
+  // Stats de base niveau 1
   const baseStrength = 20;
   const baseHealth = 100;
+  
+  // Stats actuelles avec bonus
+  const level = playerStats?.level || 1;
   const playerDamage = baseStrength + (playerStats?.strength_points || 0) * 10;
   const maxPlayerHealth = baseHealth + (playerStats?.health_points || 0) * 20;
 
@@ -171,7 +153,7 @@ export const GameScene = () => {
         const updatedClouds = prevClouds
           .map(cloud => ({
             ...cloud,
-            x: cloud.x - cloud.speed - (playerSpeed * 0.5),
+            x: cloud.x - cloud.speed - (level * 0.5),
           }))
           .filter(cloud => cloud.x + cloud.width > 0);
         
@@ -221,7 +203,7 @@ export const GameScene = () => {
       }
 
       if (!isInCombat && !currentMonster) {
-        setBackgroundOffset(prev => (prev + playerSpeed) % canvas.width);
+        setBackgroundOffset(prev => (prev + level) % canvas.width);
       }
 
       animationFrameRef.current = requestAnimationFrame(animate);
@@ -246,7 +228,7 @@ export const GameScene = () => {
       clearInterval(cloudInterval);
       clearInterval(combatInterval);
     };
-  }, [level, currentMonster, isInCombat, playerSpeed, monstersDefeated, playerHealth]);
+  }, [level, currentMonster, isInCombat, playerDamage, monstersDefeated, playerHealth]);
 
   const monsterLevel = monstersDefeated + 1;
   const canFightNextMonster = level >= monsterLevel;

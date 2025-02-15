@@ -142,25 +142,31 @@ export type Database = {
       }
       player_stats: {
         Row: {
+          available_xp: number
           created_at: string
           health_points: number | null
           id: string
+          level: number
           strength_points: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          available_xp?: number
           created_at?: string
           health_points?: number | null
           id?: string
+          level?: number
           strength_points?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          available_xp?: number
           created_at?: string
           health_points?: number | null
           id?: string
+          level?: number
           strength_points?: number | null
           updated_at?: string
           user_id?: string
