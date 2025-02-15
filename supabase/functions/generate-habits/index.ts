@@ -30,7 +30,15 @@ serve(async (req) => {
   }
 
   try {
+    // Vérification de la clé API
+    console.log('DeepSeek API Key présente:', !!deepseekApiKey);
+    if (!deepseekApiKey) {
+      throw new Error('DeepSeek API key is not configured');
+    }
+
     const { prompt, currentHabits } = await req.json();
+    console.log('Received prompt:', prompt);
+    console.log('Current habits:', JSON.stringify(currentHabits));
     
     const messages = [
       {
@@ -63,6 +71,7 @@ serve(async (req) => {
       }
     ];
 
+    console.log('Sending request to DeepSeek API...');
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -73,22 +82,41 @@ serve(async (req) => {
         model: 'deepseek-chat',
         messages,
         temperature: 0.7,
+        max_tokens: 2000,
+        top_p: 0.95,
+        frequency_penalty: 0,
+        presence_penalty: 0,
       }),
     });
 
+    // Log de la réponse brute pour le débogage
+    const responseText = await response.text();
+    console.log('Raw API Response:', responseText);
+
     if (!response.ok) {
-      throw new Error('DeepSeek API error');
+      console.error('DeepSeek API Response Status:', response.status);
+      console.error('DeepSeek API Response Headers:', Object.fromEntries(response.headers.entries()));
+      throw new Error(`DeepSeek API error: ${responseText}`);
     }
 
-    const data = await response.json();
+    // Parse la réponse JSON maintenant que nous savons qu'elle est valide
+    const data = JSON.parse(responseText);
+    console.log('Parsed API Response:', data);
+
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response format from DeepSeek API');
+    }
+
     const cleanedResponse = cleanAIResponse(data.choices[0].message.content);
+    console.log('Cleaned response:', cleanedResponse);
     
     try {
       const actions = JSON.parse(cleanedResponse);
+      console.log('Parsed actions:', actions);
 
       // Valider la structure de la réponse
       if (!actions.toCreate || !Array.isArray(actions.toCreate) || !actions.toDelete || !Array.isArray(actions.toDelete)) {
-        throw new Error('Invalid response format');
+        throw new Error('Invalid response format: missing required arrays');
       }
 
       return new Response(JSON.stringify(actions), {
@@ -98,11 +126,15 @@ serve(async (req) => {
       console.error('Parse error:', parseError);
       console.error('Raw response:', data.choices[0].message.content);
       console.error('Cleaned response:', cleanedResponse);
-      throw new Error('Failed to parse AI response');
+      throw new Error(`Failed to parse AI response: ${parseError.message}`);
     }
   } catch (error) {
     console.error('Error in generate-habits function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    // Retourner une réponse d'erreur détaillée
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: error.stack
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
