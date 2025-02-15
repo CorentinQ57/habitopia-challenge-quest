@@ -41,12 +41,12 @@ export const CategoryFilter = ({ selectedCategory, onCategoryChange }: CategoryF
   if (!categories) return null;
 
   return (
-    <Select value={selectedCategory || ""} onValueChange={(value) => onCategoryChange(value || null)}>
+    <Select value={selectedCategory || "all"} onValueChange={(value) => onCategoryChange(value === "all" ? null : value)}>
       <SelectTrigger className="w-[180px] bg-white/50 backdrop-blur-sm">
         <SelectValue placeholder="Toutes les catégories" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="">Toutes les catégories</SelectItem>
+        <SelectItem value="all">Toutes les catégories</SelectItem>
         {categories.map((category) => (
           <SelectItem
             key={category.name}
