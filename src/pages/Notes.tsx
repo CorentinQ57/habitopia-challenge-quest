@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,12 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarIcon, Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { WritingStyleManager } from "@/components/notes/WritingStyleManager";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const Notes = () => {
   const { toast } = useToast();
@@ -188,25 +187,19 @@ const Notes = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" />
-              Calendrier
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              className="rounded-md border"
-              locale={fr}
-            />
-          </CardContent>
-        </Card>
-
         <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Sélectionner une date</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DatePicker
+                date={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+              />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -247,73 +240,73 @@ const Notes = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                Note du {format(selectedDate, "d MMMM yyyy", { locale: fr })}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : isEditing ? (
-                <div className="space-y-4">
-                  <Textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Écrivez votre note ici..."
-                    className="min-h-[200px]"
-                  />
-                  <div className="flex items-center gap-2 justify-end">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setIsEditing(false);
-                        setContent(note?.content || "");
-                      }}
-                    >
-                      Annuler
-                    </Button>
-                    <Button
-                      onClick={() => mutation.mutate()}
-                      disabled={mutation.isPending}
-                    >
-                      {mutation.isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sauvegarde...
-                        </>
-                      ) : (
-                        "Sauvegarder"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {note?.content ? (
-                    <div className="whitespace-pre-wrap">{note.content}</div>
-                  ) : (
-                    <p className="text-muted-foreground italic">
-                      Aucune note pour cette date
-                    </p>
-                  )}
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Note du {format(selectedDate, "d MMMM yyyy", { locale: fr })}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : isEditing ? (
+              <div className="space-y-4">
+                <Textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Écrivez votre note ici..."
+                  className="min-h-[200px]"
+                />
+                <div className="flex items-center gap-2 justify-end">
                   <Button
+                    variant="outline"
                     onClick={() => {
-                      setIsEditing(true);
+                      setIsEditing(false);
                       setContent(note?.content || "");
                     }}
                   >
-                    {note?.content ? "Modifier" : "Ajouter une note"}
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={() => mutation.mutate()}
+                    disabled={mutation.isPending}
+                  >
+                    {mutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sauvegarde...
+                      </>
+                    ) : (
+                      "Sauvegarder"
+                    )}
                   </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {note?.content ? (
+                  <div className="whitespace-pre-wrap">{note.content}</div>
+                ) : (
+                  <p className="text-muted-foreground italic">
+                    Aucune note pour cette date
+                  </p>
+                )}
+                <Button
+                  onClick={() => {
+                    setIsEditing(true);
+                    setContent(note?.content || "");
+                  }}
+                >
+                  {note?.content ? "Modifier" : "Ajouter une note"}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
