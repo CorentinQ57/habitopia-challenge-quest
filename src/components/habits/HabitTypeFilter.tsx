@@ -1,5 +1,11 @@
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface HabitTypeFilterProps {
   selectedType: 'all' | 'good' | 'bad';
@@ -8,37 +14,25 @@ interface HabitTypeFilterProps {
 
 export const HabitTypeFilter = ({ selectedType, onTypeChange }: HabitTypeFilterProps) => {
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button
-        variant="outline"
-        onClick={() => onTypeChange('all')}
-        className={cn(
-          "backdrop-blur-sm border-gray-200/50 bg-gray-100 hover:bg-gray-200 text-gray-700",
-          selectedType === 'all' ? "ring-2 ring-offset-2 ring-stella-royal/20" : ""
-        )}
-      >
-        Toutes
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => onTypeChange('good')}
-        className={cn(
-          "backdrop-blur-sm border-gray-200/50 bg-emerald-100 hover:bg-emerald-200 text-emerald-700",
-          selectedType === 'good' ? "ring-2 ring-offset-2 ring-emerald-500/20" : ""
-        )}
-      >
-        Bonnes habitudes
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => onTypeChange('bad')}
-        className={cn(
-          "backdrop-blur-sm border-gray-200/50 bg-red-100 hover:bg-red-200 text-red-700",
-          selectedType === 'bad' ? "ring-2 ring-offset-2 ring-red-500/20" : ""
-        )}
-      >
-        Mauvaises habitudes
-      </Button>
-    </div>
+    <Select value={selectedType} onValueChange={onTypeChange}>
+      <SelectTrigger className="w-[180px] bg-white/50 backdrop-blur-sm">
+        <SelectValue placeholder="Type d'habitudes" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">Toutes</SelectItem>
+        <SelectItem value="good" className="text-emerald-700">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            Bonnes habitudes
+          </div>
+        </SelectItem>
+        <SelectItem value="bad" className="text-red-700">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-red-500" />
+            Mauvaises habitudes
+          </div>
+        </SelectItem>
+      </SelectContent>
+    </Select>
   );
 };
