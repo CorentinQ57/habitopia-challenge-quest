@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +35,41 @@ export const usePurchaseReward = () => {
 
       if (xpError) throw xpError;
 
+      // Si c'est un glaçon, d'abord vérifier l'existence de user_streaks
+      if (reward.is_freeze_token) {
+        const { data: streakExists } = await supabase
+          .from("user_streaks")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!streakExists) {
+          // Créer l'entrée user_streaks si elle n'existe pas
+          const { error: createStreakError } = await supabase
+            .from("user_streaks")
+            .insert([{
+              user_id: user.id,
+              freeze_tokens: 1,
+              current_streak: 0,
+              longest_streak: 0,
+              tasks_completed_today: 0,
+              last_activity_date: new Date().toISOString().split('T')[0]
+            }]);
+
+          if (createStreakError) throw createStreakError;
+        } else {
+          // Mettre à jour le nombre de jetons
+          const { error: updateStreakError } = await supabase
+            .from("user_streaks")
+            .update({
+              freeze_tokens: supabase.sql`freeze_tokens + 1`
+            })
+            .eq("user_id", user.id);
+
+          if (updateStreakError) throw updateStreakError;
+        }
+      }
+
       // Ajouter la récompense à l'utilisateur
       const { error: purchaseError } = await supabase
         .from("user_rewards")
@@ -54,26 +90,6 @@ export const usePurchaseReward = () => {
           }]);
 
         throw purchaseError;
-      }
-
-      // Si c'est un glaçon, ajouter un jeton de gel
-      if (reward.is_freeze_token) {
-        // D'abord, récupérer le nombre actuel de jetons
-        const { data: streakData } = await supabase
-          .from("user_streaks")
-          .select("freeze_tokens")
-          .eq("user_id", user.id)
-          .single();
-
-        const currentTokens = streakData?.freeze_tokens || 0;
-
-        // Ensuite, mettre à jour avec le nouveau nombre
-        const { error: freezeError } = await supabase
-          .from("user_streaks")
-          .update({ freeze_tokens: currentTokens + 1 })
-          .eq("user_id", user.id);
-
-        if (freezeError) throw freezeError;
       }
 
       return { success: true };

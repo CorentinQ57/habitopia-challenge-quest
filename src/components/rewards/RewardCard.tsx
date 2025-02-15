@@ -1,29 +1,17 @@
-import { Gem, Trash2 } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { usePurchaseReward } from "@/hooks/use-purchase-reward";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+
 import { useState } from "react";
+import { usePurchaseReward } from "@/hooks/use-purchase-reward";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Gem, BadgeIcon } from "lucide-react";
 
 interface Reward {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   cost: number;
-  level: number;
   is_freeze_token?: boolean;
-  user_id?: string | null;
 }
 
 interface RewardCardProps {
@@ -35,151 +23,75 @@ interface RewardCardProps {
 
 export const RewardCard = ({ reward, totalXP, getLevelIcon, getLevelColor }: RewardCardProps) => {
   const { purchaseReward, isPurchasing } = usePurchaseReward();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [isOwned, setIsOwned] = useState(false);
 
-  const { data: currentUser } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
-    },
-  });
-
-  const { data: isOwned } = useQuery({
-    queryKey: ["rewardOwnership", reward.id],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-
-      const { data, error } = await supabase
-        .from("user_rewards")
-        .select("id")
-        .eq("reward_id", reward.id)
-        .eq("user_id", user.id)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return !!data;
-    },
-  });
-
-  const handleDelete = async () => {
-    try {
-      console.log("Deleting reward:", reward.id); // Debug log
-
-      // Vérifier que la récompense n'est pas un jeton de gel
-      if (reward.is_freeze_token) {
-        throw new Error("Cannot delete freeze tokens");
-      }
-
-      const { error } = await supabase
-        .from("rewards")
-        .delete()
-        .eq("id", reward.id);
-
-      if (error) {
-        console.error("Delete error:", error);
-        throw error;
-      }
-
-      // Invalider les requêtes après une suppression réussie
-      await queryClient.invalidateQueries({ queryKey: ["rewards"] });
-      await queryClient.invalidateQueries({ queryKey: ["rewardOwnership"] });
-      
-      toast({
-        title: "Récompense supprimée",
-        description: "La récompense a été supprimée avec succès.",
-      });
-    } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer la récompense.",
-        variant: "destructive",
-      });
-    } finally {
-      setShowDeleteDialog(false);
-    }
+  // Determiner le niveau en fonction du coût
+  const getLevel = (cost: number) => {
+    if (cost <= 100) return 1;
+    if (cost <= 300) return 2;
+    if (cost <= 600) return 3;
+    return 4;
   };
 
+  const level = getLevel(reward.cost);
+  const canPurchase = totalXP >= reward.cost;
+
   return (
-    <>
-      <div
-        className={`relative overflow-hidden rounded-lg border bg-gradient-to-br ${getLevelColor(reward.level)} p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            {getLevelIcon(reward.level)}
-            <h3 className="text-lg font-semibold">{reward.title}</h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 bg-background/40 px-3 py-1 rounded-full">
-              <Gem className="w-4 h-4 text-primary" />
-              <span className="font-semibold">{reward.cost} XP</span>
-            </div>
-            {!reward.is_freeze_token && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 bg-background/40 hover:bg-red-500 hover:text-white"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDeleteDialog(true);
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-        
-        {reward.description && (
-          <p className="text-sm text-muted-foreground mb-4">{reward.description}</p>
-        )}
-
-        <Button
-          onClick={() => purchaseReward(reward, totalXP)}
-          disabled={totalXP < reward.cost || isPurchasing || isOwned}
-          variant={isOwned || totalXP < reward.cost ? "outline" : "default"}
-          className={`w-full ${
-            isOwned || totalXP < reward.cost
-              ? "bg-background/50 hover:bg-background/70"
-              : "bg-background/50 hover:bg-background/70"
-          }`}
-        >
-          {isOwned ? (
-            "Déjà possédé"
-          ) : isPurchasing ? (
-            "Achat en cours..."
-          ) : totalXP >= reward.cost ? (
-            "Acheter"
-          ) : (
-            "Points insuffisants"
+    <Card className={`relative overflow-hidden bg-gradient-to-br ${getLevelColor(level)}`}>
+      {isOwned && (
+        <Badge className="absolute right-2 top-2 z-10 flex items-center gap-1.5 bg-primary text-primary-foreground">
+          <BadgeIcon className="h-3 w-3" />
+          Possédé
+        </Badge>
+      )}
+      
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="space-y-1">
+          <h4 className="font-semibold tracking-tight">{reward.title}</h4>
+          {reward.description && (
+            <p className="text-sm text-muted-foreground">{reward.description}</p>
           )}
-        </Button>
-      </div>
-
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer la récompense</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer définitivement la récompense "{reward.title}" ?
-              Cette action est irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>
-              Annuler
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+        </div>
+        {getLevelIcon(level)}
+      </CardHeader>
+      
+      <CardContent>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <Gem className="h-4 w-4 text-primary" />
+            <span className="font-semibold">{reward.cost}</span>
+          </div>
+          <Button
+            onClick={() => {
+              purchaseReward(reward, totalXP);
+              setIsOwned(true);
+            }}
+            disabled={!canPurchase || isPurchasing || isOwned}
+            variant={isOwned ? "secondary" : canPurchase ? "default" : "outline"}
+            size="sm"
+            className={`transition-all duration-300 ${
+              isOwned 
+                ? "text-primary-foreground"
+                : canPurchase 
+                ? "text-primary-foreground" 
+                : "text-foreground"
+            }`}
+          >
+            {isOwned ? (
+              <span className="flex items-center gap-2">
+                <BadgeIcon className="w-4 h-4" />
+                Possédé
+              </span>
+            ) : isPurchasing ? (
+              "Achat en cours..."
+            ) : canPurchase ? (
+              "Acheter"
+            ) : (
+              "Points insuffisants"
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
