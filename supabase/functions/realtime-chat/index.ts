@@ -12,6 +12,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Content-Type': 'application/json'
 };
 
 serve(async (req) => {
@@ -23,20 +24,19 @@ serve(async (req) => {
     let requestBody;
     try {
       const text = await req.text();
-      console.log("Raw request body:", text);
-      requestBody = JSON.parse(text);
+      console.log("Raw request body text:", text);
+      requestBody = JSON.parse(text.trim()); // Ajout de trim() pour supprimer les espaces
+      console.log("Parsed request body:", JSON.stringify(requestBody, null, 2));
     } catch (parseError) {
       console.error("Error parsing request body:", parseError);
       return new Response(
         JSON.stringify({ error: `Invalid JSON: ${parseError.message}` }),
         { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: corsHeaders,
           status: 400
         }
       );
     }
-
-    console.log("Parsed request body:", requestBody);
 
     // Extraire le user_id du token d'autorisation
     const authHeader = req.headers.get('authorization');
@@ -66,6 +66,7 @@ serve(async (req) => {
       const base64Data = dataUrlParts[1];
       
       try {
+        console.log("Sending transcription request to OpenAI...");
         const transcriptionResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
           method: 'POST',
           headers: {
@@ -93,7 +94,7 @@ serve(async (req) => {
         }
 
         const transcriptionData = await transcriptionResponse.json();
-        userMessage = transcriptionData.text;
+        userMessage = transcriptionData.text.trim();
         console.log("Transcribed text:", userMessage);
       } catch (transcriptionError) {
         console.error("Transcription error:", transcriptionError);
@@ -122,18 +123,12 @@ serve(async (req) => {
     }
 
     try {
-      const conversationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4',
-          messages: [
-            {
-              role: 'system',
-              content: `Tu es un assistant qui aide à gérer les habitudes et les notes. Tu as accès aux données suivantes de l'utilisateur:
+      const promptData = {
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content: `Tu es un assistant qui aide à gérer les habitudes et les notes. Tu as accès aux données suivantes de l'utilisateur:
 
 Habitudes actuelles:
 ${JSON.stringify(userHabits, null, 2)}
@@ -163,15 +158,25 @@ Par exemple:
   },
   "message": "J'ai créé une nouvelle habitude de méditation"
 }`
-            },
-            {
-              role: 'user',
-              content: userMessage
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
+          },
+          {
+            role: 'user',
+            content: userMessage
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+      };
+
+      console.log("Sending request to OpenAI:", JSON.stringify(promptData, null, 2));
+
+      const conversationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(promptData),
       });
 
       if (!conversationResponse.ok) {
@@ -180,16 +185,19 @@ Par exemple:
       }
 
       const conversationData = await conversationResponse.json();
+      console.log("Raw OpenAI response:", JSON.stringify(conversationData, null, 2));
+
       let assistantResponse;
       try {
-        assistantResponse = JSON.parse(conversationData.choices[0].message.content);
+        const rawResponse = conversationData.choices[0].message.content.trim();
+        console.log("Raw assistant message:", rawResponse);
+        assistantResponse = JSON.parse(rawResponse);
+        console.log("Parsed assistant response:", JSON.stringify(assistantResponse, null, 2));
       } catch (parseError) {
         console.error("Error parsing assistant response:", parseError);
-        console.log("Raw assistant response:", conversationData.choices[0].message.content);
+        console.log("Problematic content:", conversationData.choices[0].message.content);
         throw new Error('Invalid response format from assistant');
       }
-
-      console.log("Assistant response:", assistantResponse);
 
       // Exécuter l'action demandée
       switch (assistantResponse.action) {
@@ -250,12 +258,16 @@ Par exemple:
         }
       }
 
+      const responseData = {
+        type: 'assistant_message',
+        content: assistantResponse.message
+      };
+
+      console.log("Sending response:", JSON.stringify(responseData, null, 2));
+
       return new Response(
-        JSON.stringify({
-          type: 'assistant_message',
-          content: assistantResponse.message
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify(responseData),
+        { headers: corsHeaders }
       );
 
     } catch (aiError) {
@@ -267,7 +279,7 @@ Par exemple:
     console.error('Error processing request:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      { headers: corsHeaders, status: 500 }
     );
   }
 });
