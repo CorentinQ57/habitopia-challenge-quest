@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/Header";
 import { HabitGrid } from "@/components/HabitGrid";
 import { CategoryManager } from "@/components/habits/CategoryManager";

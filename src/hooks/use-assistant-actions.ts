@@ -8,13 +8,16 @@ export const useAssistantActions = () => {
   const queryClient = useQueryClient();
 
   const handleSuccessfulAction = () => {
-    queryClient.invalidateQueries({ queryKey: ["habits"] });
-    queryClient.invalidateQueries({ queryKey: ["dailyNotes"] });
-    queryClient.invalidateQueries({ queryKey: ["habitLogs"] });
-    queryClient.invalidateQueries({ queryKey: ["userStreak"] });
-    queryClient.invalidateQueries({ queryKey: ["weeklyStats"] });
-    queryClient.invalidateQueries({ queryKey: ["categoryStats"] });
-    queryClient.invalidateQueries({ queryKey: ["hourlyStats"] });
+    // Invalider les requêtes de manière asynchrone
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["habits"] }),
+      queryClient.invalidateQueries({ queryKey: ["dailyNotes"] }),
+      queryClient.invalidateQueries({ queryKey: ["habitLogs"] }),
+      queryClient.invalidateQueries({ queryKey: ["userStreak"] }),
+      queryClient.invalidateQueries({ queryKey: ["weeklyStats"] }),
+      queryClient.invalidateQueries({ queryKey: ["categoryStats"] }),
+      queryClient.invalidateQueries({ queryKey: ["hourlyStats"] })
+    ]);
   };
 
   const executeActions = async (actions: any[]) => {
@@ -28,42 +31,45 @@ export const useAssistantActions = () => {
       return;
     }
 
-    let actionSuccessful = false;
-
     for (const action of actions) {
       try {
         switch (action.action) {
-          case 'create_habit':
-            await supabase.from('habits').insert({
+          case 'create_habit': {
+            const { error } = await supabase.from('habits').insert({
               ...action.data,
               user_id: user.id
             });
-            actionSuccessful = true;
+            if (error) throw error;
+            await handleSuccessfulAction();
             toast({
               description: `✨ Nouvelle habitude créée : ${action.data.title}`
             });
             break;
+          }
 
-          case 'delete_habit':
+          case 'delete_habit': {
             if (action.data.title === 'ALL') {
-              await supabase.from('habits')
+              const { error } = await supabase.from('habits')
                 .delete()
                 .eq('user_id', user.id);
-              actionSuccessful = true;
+              if (error) throw error;
+              await handleSuccessfulAction();
               toast({
                 description: "🗑️ Toutes les habitudes ont été supprimées"
               });
             } else {
-              await supabase.from('habits')
+              const { error } = await supabase.from('habits')
                 .delete()
                 .eq('title', action.data.title)
                 .eq('user_id', user.id);
-              actionSuccessful = true;
+              if (error) throw error;
+              await handleSuccessfulAction();
               toast({
                 description: `🗑️ Habitude supprimée : ${action.data.title}`
               });
             }
             break;
+          }
 
           case 'update_note': {
             const date = action.data.date || new Date().toISOString().split('T')[0];
@@ -78,7 +84,6 @@ export const useAssistantActions = () => {
               const { error: updateError } = await supabase.from('daily_notes')
                 .update({ content: action.data.content })
                 .eq('id', existingNote.id);
-                
               if (updateError) throw updateError;
             } else {
               const { error: insertError } = await supabase.from('daily_notes').insert({
@@ -86,24 +91,15 @@ export const useAssistantActions = () => {
                 user_id: user.id,
                 date: date
               });
-              
               if (insertError) throw insertError;
             }
-            actionSuccessful = true;
+            await handleSuccessfulAction();
             toast({
               description: `📝 Note ${existingNote ? 'mise à jour' : 'créée'} pour le ${new Date(date).toLocaleDateString('fr-FR')}`
             });
-            // Invalidate queries immediateluy after note operation
-            handleSuccessfulAction();
             break;
           }
         }
-
-        // For non-note actions, update at the end of each action
-        if (actionSuccessful && action.action !== 'update_note') {
-          handleSuccessfulAction();
-        }
-
       } catch (error) {
         console.error('Erreur lors de l\'exécution de l\'action:', error);
         toast({
