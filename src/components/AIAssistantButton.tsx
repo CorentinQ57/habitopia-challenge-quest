@@ -1,19 +1,20 @@
 
 import { useState, useRef } from 'react';
-import { Bot } from 'lucide-react';
+import { Bot, Wand2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from '@tanstack/react-query';
+import { Card } from './ui/card';
 
 export function AIAssistantButton() {
   const { toast } = useToast();
   const [isListening, setIsListening] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const queryClient = useQueryClient();
 
   const handleSuccessfulAction = () => {
-    // Actualiser toutes les requêtes pertinentes
     queryClient.invalidateQueries({ queryKey: ["habits"] });
     queryClient.invalidateQueries({ queryKey: ["dailyNotes"] });
     queryClient.invalidateQueries({ queryKey: ["habitLogs"] });
@@ -41,6 +42,7 @@ export function AIAssistantButton() {
         reader.onloadend = async () => {
           try {
             console.log("Envoi de la requête à la fonction Supabase");
+            setIsGenerating(true);
             
             const { data, error } = await supabase.functions.invoke('realtime-chat', {
               body: {
@@ -48,6 +50,8 @@ export function AIAssistantButton() {
                 data: reader.result
               }
             });
+
+            setIsGenerating(false);
 
             if (error) {
               console.error("Erreur lors de l'appel à la fonction:", error);
@@ -66,7 +70,6 @@ export function AIAssistantButton() {
                 description: data.content
               });
               
-              // Actualiser les données après une action réussie
               handleSuccessfulAction();
             }
           } catch (error) {
@@ -76,6 +79,7 @@ export function AIAssistantButton() {
               description: "Impossible de traiter la réponse de l'assistant",
               variant: "destructive"
             });
+            setIsGenerating(false);
           }
         };
         
@@ -117,15 +121,42 @@ export function AIAssistantButton() {
   };
 
   return (
-    <Button
-      onClick={toggleRecording}
-      size="icon"
-      className={`fixed bottom-8 right-8 rounded-full w-12 h-12 shadow-lg transition-colors ${
-        isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary/90'
-      }`}
-      aria-label="Assistant IA"
-    >
-      <Bot className={`w-6 h-6 ${isListening ? 'animate-pulse' : ''}`} />
-    </Button>
+    <Card className={`mb-4 overflow-hidden transition-all duration-300 ${
+      isGenerating ? 'animate-pulse' : ''
+    }`}>
+      <Button
+        onClick={toggleRecording}
+        variant="ghost"
+        className={`w-full h-full px-6 py-8 relative group ${
+          isListening ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'hover:bg-gray-100'
+        }`}
+      >
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            {isGenerating ? (
+              <div className="relative">
+                <Wand2 className="w-6 h-6 animate-[spin_3s_linear_infinite]" />
+                <div className="absolute inset-0 bg-gradient-to-r from-stella-royal to-stella-purple opacity-50 blur-sm animate-pulse"></div>
+              </div>
+            ) : (
+              <Bot className={`w-6 h-6 transition-transform duration-300 group-hover:scale-110 ${
+                isListening ? 'animate-pulse text-red-500' : ''
+              }`} />
+            )}
+          </div>
+          <div className="flex flex-col items-start">
+            <span className="font-medium">
+              {isGenerating ? 'Je réfléchis...' : isListening ? 'Je vous écoute...' : 'Comment puis-je vous aider ?'}
+            </span>
+            <span className="text-sm text-gray-500">
+              {isGenerating ? 'Merci de patienter' : isListening ? 'Cliquez pour arrêter' : 'Cliquez pour parler'}
+            </span>
+          </div>
+        </div>
+        {isGenerating && (
+          <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-stella-royal to-stella-purple animate-[shimmer_2s_infinite]"></div>
+        )}
+      </Button>
+    </Card>
   );
 }
