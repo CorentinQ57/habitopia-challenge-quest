@@ -1,25 +1,14 @@
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Bot } from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
-
-// L'URL doit être complète et inclure le projet Supabase
-const WS_URL = 'wss://haodastqykbgflafrlfn.functions.supabase.co/realtime-chat';
+import { supabase } from "@/integrations/supabase/client";
 
 export function AIAssistantButton() {
   const { toast } = useToast();
   const [isListening, setIsListening] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-
-  useEffect(() => {
-    return () => {
-      wsRef.current?.close();
-      stopRecording();
-    };
-  }, []);
 
   const startRecording = async () => {
     try {
@@ -36,20 +25,41 @@ export function AIAssistantButton() {
         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
         const reader = new FileReader();
         
-        reader.onloadend = () => {
-          if (wsRef.current?.readyState === WebSocket.OPEN) {
-            console.log("Envoi de la requête WebSocket à Supabase:", {
-              url: WS_URL,
-              messageType: 'audio',
-              dataLength: reader.result?.toString().length
+        reader.onloadend = async () => {
+          try {
+            console.log("Envoi de la requête à la fonction Supabase");
+            
+            const { data, error } = await supabase.functions.invoke('realtime-chat', {
+              body: {
+                type: 'audio',
+                data: reader.result
+              }
             });
 
-            wsRef.current.send(JSON.stringify({
-              type: 'audio',
-              data: reader.result
-            }));
-          } else {
-            console.error("WebSocket n'est pas ouvert. État actuel:", wsRef.current?.readyState);
+            if (error) {
+              console.error("Erreur lors de l'appel à la fonction:", error);
+              toast({
+                title: "Erreur",
+                description: error.message,
+                variant: "destructive"
+              });
+              return;
+            }
+
+            console.log("Réponse reçue:", data);
+            
+            if (data.type === 'assistant_message') {
+              toast({
+                description: data.content
+              });
+            }
+          } catch (error) {
+            console.error("Erreur lors du traitement de la réponse:", error);
+            toast({
+              title: "Erreur",
+              description: "Impossible de traiter la réponse de l'assistant",
+              variant: "destructive"
+            });
           }
         };
         
@@ -59,48 +69,10 @@ export function AIAssistantButton() {
       mediaRecorderRef.current.start();
       setIsListening(true);
       
-      // Création de la connexion WebSocket
-      console.log("Tentative de connexion WebSocket à:", WS_URL);
-      wsRef.current = new WebSocket(WS_URL);
-      
-      wsRef.current.onopen = () => {
-        console.log("WebSocket connecté avec succès");
-        setIsConnected(true);
-        toast({
-          title: "Assistant connecté",
-          description: "Vous pouvez parler à l'assistant"
-        });
-      };
-      
-      wsRef.current.onmessage = (event) => {
-        console.log("Message reçu du serveur:", event.data);
-        const data = JSON.parse(event.data);
-        if (data.type === 'assistant_message') {
-          toast({
-            description: data.content
-          });
-        } else if (data.type === 'error') {
-          console.error("Erreur reçue du serveur:", data.content);
-          toast({
-            title: "Erreur",
-            description: data.content,
-            variant: "destructive"
-          });
-        }
-      };
-      
-      wsRef.current.onerror = (error) => {
-        console.error('Erreur WebSocket:', {
-          error,
-          wsState: wsRef.current?.readyState,
-          url: WS_URL
-        });
-        toast({
-          title: "Erreur de connexion",
-          description: "Impossible de se connecter à l'assistant",
-          variant: "destructive"
-        });
-      };
+      toast({
+        title: "Assistant prêt",
+        description: "Vous pouvez parler à l'assistant"
+      });
 
     } catch (error) {
       console.error('Erreur d\'accès au microphone:', error);
@@ -118,8 +90,6 @@ export function AIAssistantButton() {
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       setIsListening(false);
     }
-    wsRef.current?.close();
-    setIsConnected(false);
   };
 
   const toggleRecording = () => {
