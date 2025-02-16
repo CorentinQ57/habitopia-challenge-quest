@@ -15,6 +15,7 @@ export function AIAssistantButton() {
   const queryClient = useQueryClient();
 
   const handleSuccessfulAction = () => {
+    // Invalidate all relevant queries to trigger immediate updates
     queryClient.invalidateQueries({ queryKey: ["habits"] });
     queryClient.invalidateQueries({ queryKey: ["dailyNotes"] });
     queryClient.invalidateQueries({ queryKey: ["habitLogs"] });
@@ -26,7 +27,16 @@ export function AIAssistantButton() {
 
   const executeActions = async (actions: any[]) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour effectuer cette action",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    let actionSuccessful = false;
 
     for (const action of actions) {
       try {
@@ -36,6 +46,10 @@ export function AIAssistantButton() {
               ...action.data,
               user_id: user.id
             });
+            actionSuccessful = true;
+            toast({
+              description: `✨ Nouvelle habitude créée : ${action.data.title}`
+            });
             break;
 
           case 'delete_habit':
@@ -43,16 +57,24 @@ export function AIAssistantButton() {
               await supabase.from('habits')
                 .delete()
                 .eq('user_id', user.id);
+              actionSuccessful = true;
+              toast({
+                description: "🗑️ Toutes les habitudes ont été supprimées"
+              });
             } else {
               await supabase.from('habits')
                 .delete()
                 .eq('title', action.data.title)
                 .eq('user_id', user.id);
+              actionSuccessful = true;
+              toast({
+                description: `🗑️ Habitude supprimée : ${action.data.title}`
+              });
             }
             break;
 
           case 'update_note': {
-            const date = new Date().toISOString().split('T')[0];
+            const date = action.data.date || new Date().toISOString().split('T')[0];
             const { data: existingNote } = await supabase
               .from('daily_notes')
               .select('*')
@@ -71,9 +93,19 @@ export function AIAssistantButton() {
                 date: date
               });
             }
+            actionSuccessful = true;
+            toast({
+              description: `📝 Note mise à jour pour le ${new Date(date).toLocaleDateString('fr-FR')}`
+            });
             break;
           }
         }
+
+        // Actualiser les données immédiatement après chaque action réussie
+        if (actionSuccessful) {
+          handleSuccessfulAction();
+        }
+
       } catch (error) {
         console.error('Erreur lors de l\'exécution de l\'action:', error);
         toast({
@@ -83,8 +115,6 @@ export function AIAssistantButton() {
         });
       }
     }
-
-    handleSuccessfulAction();
   };
 
   const startRecording = async () => {
@@ -127,7 +157,7 @@ export function AIAssistantButton() {
 
             console.log("Réponse reçue:", data);
             
-            // Vérifie si la réponse contient des actions à exécuter
+            // Exécute les actions avant d'afficher le message de confirmation
             if (data.actions && Array.isArray(data.actions)) {
               await executeActions(data.actions);
             }
@@ -159,8 +189,7 @@ export function AIAssistantButton() {
       setIsListening(true);
       
       toast({
-        title: "Assistant prêt",
-        description: "Vous pouvez parler à l'assistant"
+        description: "🎙️ Vous pouvez parler à l'assistant"
       });
 
     } catch (error) {
