@@ -1,6 +1,6 @@
 
 import { useState, useRef } from 'react';
-import { Bot } from 'lucide-react';
+import { Bot, Wand2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 export function AIAssistantButton() {
   const { toast } = useToast();
   const [isListening, setIsListening] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const queryClient = useQueryClient();
 
@@ -41,6 +42,7 @@ export function AIAssistantButton() {
         reader.onloadend = async () => {
           try {
             console.log("Envoi de la requête à la fonction Supabase");
+            setIsGenerating(true);
             
             const { data, error } = await supabase.functions.invoke('realtime-chat', {
               body: {
@@ -48,6 +50,8 @@ export function AIAssistantButton() {
                 data: reader.result
               }
             });
+
+            setIsGenerating(false);
 
             if (error) {
               console.error("Erreur lors de l'appel à la fonction:", error);
@@ -76,6 +80,7 @@ export function AIAssistantButton() {
               description: "Impossible de traiter la réponse de l'assistant",
               variant: "destructive"
             });
+            setIsGenerating(false);
           }
         };
         
@@ -119,13 +124,26 @@ export function AIAssistantButton() {
   return (
     <Button
       onClick={toggleRecording}
-      size="icon"
-      className={`fixed bottom-8 right-8 rounded-full w-12 h-12 shadow-lg transition-colors ${
-        isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-primary hover:bg-primary/90'
+      variant="ghost"
+      className={`w-full justify-start gap-3 px-4 py-6 relative overflow-hidden ${
+        isListening ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : ''
       }`}
-      aria-label="Assistant IA"
     >
-      <Bot className={`w-6 h-6 ${isListening ? 'animate-pulse' : ''}`} />
+      <div className="relative">
+        {isGenerating ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Wand2 className="w-5 h-5 animate-pulse" />
+          </div>
+        ) : (
+          <Bot className={`w-5 h-5 ${isListening ? 'animate-pulse text-red-500' : ''}`} />
+        )}
+      </div>
+      <span className={`${isListening ? 'text-red-500' : ''}`}>
+        {isGenerating ? 'En cours de génération...' : isListening ? 'En écoute...' : 'Assistant IA'}
+      </span>
+      {isGenerating && (
+        <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-primary to-stella-purple animate-pulse w-full" />
+      )}
     </Button>
   );
 }

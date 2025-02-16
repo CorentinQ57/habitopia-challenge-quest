@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { AIAssistantButton } from "./AIAssistantButton";
 
 const menuItems = [
   {
@@ -139,28 +140,31 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-gray-200/50">
-        <div className="p-4">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-              <AvatarImage src={profile?.avatar_url} />
-              <AvatarFallback className="bg-stella-royal text-white">
-                {profile?.username?.charAt(0)?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-700 truncate">
-                {profile?.username || "Utilisateur"}
-              </p>
+        <div className="p-2">
+          <AIAssistantButton />
+          <div className="p-2">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+                <AvatarImage src={profile?.avatar_url} />
+                <AvatarFallback className="bg-stella-royal text-white">
+                  {profile?.username?.charAt(0)?.toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-700 truncate">
+                  {profile?.username || "Utilisateur"}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSignOut}
+                className="h-8 w-8 text-gray-500 hover:text-destructive hover:bg-destructive/10"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="sr-only">Se déconnecter</span>
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSignOut}
-              className="h-8 w-8 text-gray-500 hover:text-destructive hover:bg-destructive/10"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="sr-only">Se déconnecter</span>
-            </Button>
           </div>
         </div>
       </SidebarFooter>
