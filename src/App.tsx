@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { AIAssistantButton } from "@/components/AIAssistantButton";
 import Dashboard from "./pages/Dashboard";
 import Habits from "./pages/Habits";
 import Statistics from "./pages/Statistics";
@@ -79,6 +80,7 @@ const App = () => {
                   </Routes>
                 </div>
               </main>
+              {session && <AIAssistantButton />}
             </div>
           </SidebarProvider>
         </BrowserRouter>
