@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.8';
@@ -38,7 +37,6 @@ serve(async (req) => {
       );
     }
 
-    // Extraire le user_id du token d'autorisation
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       throw new Error('Non authentifié');
@@ -107,7 +105,6 @@ serve(async (req) => {
       throw new Error('Invalid request: no audio or message provided');
     }
 
-    // Récupérer les habitudes actuelles de l'utilisateur
     const { data: userHabits, error: habitsError } = await supabase
       .from('habits')
       .select('*')
@@ -117,7 +114,6 @@ serve(async (req) => {
       throw new Error(`Failed to fetch habits: ${habitsError.message}`);
     }
 
-    // Récupérer les notes actuelles de l'utilisateur
     const { data: userNotes, error: notesError } = await supabase
       .from('daily_notes')
       .select('*')
@@ -142,60 +138,72 @@ Notes actuelles:
 ${JSON.stringify(userNotes, null, 2)}
 
 Tu peux effectuer les actions suivantes:
-1. Créer une nouvelle habitude
+1. Créer une ou plusieurs nouvelles habitudes
 2. Modifier une habitude existante
 3. Supprimer une habitude
 4. Créer ou modifier une note
 
 Pour chaque action, réponds UNIQUEMENT avec un objet JSON valide contenant:
-- action: "create_habit", "update_habit", "delete_habit", ou "update_note"
-- data: les données nécessaires pour l'action
+- actions: un tableau d'actions à effectuer
 - message: un message à afficher à l'utilisateur
 
 Exemples de réponses valides:
 
-Pour créer une habitude:
+Pour créer plusieurs habitudes:
 {
-  "action": "create_habit",
-  "data": {
-    "title": "Méditer",
-    "description": "10 minutes par jour",
-    "habit_type": "good",
-    "experience_points": 50,
-    "icon": "🧘‍♂️"
-  },
+  "actions": [
+    {
+      "action": "create_habit",
+      "data": {
+        "title": "Méditer",
+        "description": "10 minutes par jour",
+        "habit_type": "good",
+        "experience_points": 50,
+        "icon": "🧘‍♂️"
+      }
+    },
+    {
+      "action": "create_habit",
+      "data": {
+        "title": "Boire de l'eau",
+        "description": "2L par jour",
+        "habit_type": "good",
+        "experience_points": 30,
+        "icon": "💧"
+      }
+    }
+  ],
+  "message": "J'ai créé 2 nouvelles habitudes pour vous"
+}
+
+Pour créer une seule habitude:
+{
+  "actions": [
+    {
+      "action": "create_habit",
+      "data": {
+        "title": "Méditer",
+        "description": "10 minutes par jour",
+        "habit_type": "good",
+        "experience_points": 50,
+        "icon": "🧘‍♂️"
+      }
+    }
+  ],
   "message": "J'ai créé une nouvelle habitude de méditation"
 }
 
 Pour supprimer une habitude:
 {
-  "action": "delete_habit",
-  "data": {
-    "title": "Méditer"
-  },
+  "actions": [
+    {
+      "action": "delete_habit",
+      "data": {
+        "title": "Méditer"
+      }
+    }
+  ],
   "message": "J'ai supprimé l'habitude de méditation"
-}
-
-Pour mettre à jour une habitude:
-{
-  "action": "update_habit",
-  "data": {
-    "title": "Méditer",
-    "description": "20 minutes par jour",
-    "habit_type": "good",
-    "experience_points": 100,
-    "icon": "🧘‍♂️"
-  },
-  "message": "J'ai mis à jour l'habitude de méditation"
-}
-
-Pour supprimer toutes les habitudes:
-{
-  "action": "delete_habit",
-  "data": {
-    "title": "ALL"
-  },
-  "message": "J'ai supprimé toutes les habitudes"
 }
 
 IMPORTANT : 
@@ -245,98 +253,98 @@ IMPORTANT :
         throw new Error('Invalid response format from assistant');
       }
 
-      // Validation des données pour la création d'habitude
-      if (assistantResponse.action === 'create_habit') {
-        const requiredFields = ['title', 'description', 'habit_type', 'experience_points', 'icon'];
-        const missingFields = requiredFields.filter(field => !assistantResponse.data[field]);
-        
-        if (missingFields.length > 0) {
-          throw new Error(`Missing required fields for habit creation: ${missingFields.join(', ')}`);
-        }
+      for (const action of assistantResponse.actions) {
+        if (action.action === 'create_habit') {
+          const requiredFields = ['title', 'description', 'habit_type', 'experience_points', 'icon'];
+          const missingFields = requiredFields.filter(field => !action.data[field]);
+          
+          if (missingFields.length > 0) {
+            throw new Error(`Missing required fields for habit creation: ${missingFields.join(', ')}`);
+          }
 
-        if (!['good', 'bad'].includes(assistantResponse.data.habit_type)) {
-          throw new Error('habit_type must be either "good" or "bad"');
-        }
+          if (!['good', 'bad'].includes(action.data.habit_type)) {
+            throw new Error('habit_type must be either "good" or "bad"');
+          }
 
-        if (typeof assistantResponse.data.experience_points !== 'number' || assistantResponse.data.experience_points <= 0) {
-          throw new Error('experience_points must be a positive number');
+          if (typeof action.data.experience_points !== 'number' || action.data.experience_points <= 0) {
+            throw new Error('experience_points must be a positive number');
+          }
         }
       }
 
-      // Exécuter l'action demandée
       try {
-        switch (assistantResponse.action) {
-          case 'create_habit': {
-            console.log("Creating habit with data:", JSON.stringify(assistantResponse.data, null, 2));
-            const { data: newHabit, error } = await supabase.from('habits').insert([{
-              ...assistantResponse.data,
-              user_id: user.id
-            }]).select().single();
+        for (const action of assistantResponse.actions) {
+          switch (action.action) {
+            case 'create_habit': {
+              console.log("Creating habit with data:", JSON.stringify(action.data, null, 2));
+              const { data: newHabit, error } = await supabase.from('habits').insert([{
+                ...action.data,
+                user_id: user.id
+              }]).select().single();
 
-            if (error) {
-              console.error("Supabase error creating habit:", error);
-              throw new Error(`Failed to create habit: ${error.message}`);
+              if (error) {
+                console.error("Supabase error creating habit:", error);
+                throw new Error(`Failed to create habit: ${error.message}`);
+              }
+              console.log("Successfully created habit:", newHabit);
+              break;
             }
-            console.log("Successfully created habit:", newHabit);
-            break;
-          }
 
-          case 'update_habit': {
-            const { error } = await supabase.from('habits')
-              .update(assistantResponse.data)
-              .eq('title', assistantResponse.data.title)
-              .eq('user_id', user.id);
-            if (error) throw new Error(`Failed to update habit: ${error.message}`);
-            break;
-          }
-
-          case 'delete_habit': {
-            let error;
-            if (assistantResponse.data.title === 'ALL') {
-              // Supprimer toutes les habitudes
-              const { error: deleteError } = await supabase.from('habits')
-                .delete()
+            case 'update_habit': {
+              const { error } = await supabase.from('habits')
+                .update(action.data)
+                .eq('title', action.data.title)
                 .eq('user_id', user.id);
-              error = deleteError;
-            } else {
-              // Supprimer une habitude spécifique
-              const { error: deleteError } = await supabase.from('habits')
-                .delete()
-                .eq('title', assistantResponse.data.title)
-                .eq('user_id', user.id);
-              error = deleteError;
-            }
-            if (error) throw new Error(`Failed to delete habit(s): ${error.message}`);
-            break;
-          }
-
-          case 'update_note': {
-            const today = new Date().toISOString().split('T')[0];
-            const { data: existingNote, error: fetchError } = await supabase
-              .from('daily_notes')
-              .select('*')
-              .eq('user_id', user.id)
-              .eq('date', today)
-              .maybeSingle();
-
-            if (fetchError) {
-              throw new Error(`Failed to fetch note: ${fetchError.message}`);
+              if (error) throw new Error(`Failed to update habit: ${error.message}`);
+              break;
             }
 
-            if (existingNote) {
-              const { error } = await supabase.from('daily_notes')
-                .update({ content: assistantResponse.data.content })
-                .eq('id', existingNote.id);
-              if (error) throw new Error(`Failed to update note: ${error.message}`);
-            } else {
-              const { error } = await supabase.from('daily_notes').insert([{
-                content: assistantResponse.data.content,
-                user_id: user.id,
-                date: today
-              }]);
-              if (error) throw new Error(`Failed to create note: ${error.message}`);
+            case 'delete_habit': {
+              let error;
+              if (action.data.title === 'ALL') {
+                const { error: deleteError } = await supabase.from('habits')
+                  .delete()
+                  .eq('user_id', user.id);
+                error = deleteError;
+              } else {
+                const { error: deleteError } = await supabase.from('habits')
+                  .delete()
+                  .eq('title', action.data.title)
+                  .eq('user_id', user.id);
+                error = deleteError;
+              }
+              if (error) throw new Error(`Failed to delete habit(s): ${error.message}`);
+              break;
             }
-            break;
+
+            case 'update_note': {
+              const today = new Date().toISOString().split('T')[0];
+              const { data: existingNote, error: fetchError } = await supabase
+                .from('daily_notes')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('date', today)
+                .maybeSingle();
+
+              if (fetchError) {
+                throw new Error(`Failed to fetch note: ${fetchError.message}`);
+              }
+
+              if (existingNote) {
+                const { error } = await supabase.from('daily_notes')
+                  .update({ content: action.data.content })
+                  .eq('id', existingNote.id);
+                if (error) throw new Error(`Failed to update note: ${error.message}`);
+              } else {
+                const { error } = await supabase.from('daily_notes').insert([{
+                  content: action.data.content,
+                  user_id: user.id,
+                  date: today
+                }]);
+                if (error) throw new Error(`Failed to create note: ${error.message}`);
+              }
+              break;
+            }
           }
         }
 
