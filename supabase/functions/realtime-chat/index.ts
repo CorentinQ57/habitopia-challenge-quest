@@ -1,8 +1,13 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.8';
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,7 +15,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -19,11 +23,24 @@ serve(async (req) => {
     const body = await req.json();
     console.log("Requête reçue:", body);
 
+    // Extraire le user_id du token d'autorisation
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      throw new Error('Non authentifié');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !user) {
+      throw new Error('Utilisateur non authentifié');
+    }
+
+    let userMessage = '';
+
     if (body.type === 'audio') {
-      // Extraire le contenu base64 en supprimant le préfixe data:audio/wav;base64,
       const base64Data = body.data.split(',')[1];
       
-      // Convertir en texte en utilisant l'API Whisper d'OpenAI
       const transcriptionResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
         method: 'POST',
         headers: {
@@ -31,7 +48,6 @@ serve(async (req) => {
         },
         body: (() => {
           const formData = new FormData();
-          // Convertir le base64 en blob
           const byteCharacters = atob(base64Data);
           const byteNumbers = new Array(byteCharacters.length);
           for (let i = 0; i < byteCharacters.length; i++) {
@@ -51,50 +67,135 @@ serve(async (req) => {
       }
 
       const transcriptionData = await transcriptionResponse.json();
-      const text = transcriptionData.text;
-      console.log("Transcribed text:", text);
+      userMessage = transcriptionData.text;
+      console.log("Transcribed text:", userMessage);
+    }
 
-      // Une fois le texte obtenu, on l'envoie au modèle GPT
-      const conversationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4',
-          messages: [
-            {
-              role: 'system',
-              content: 'Tu es un assistant qui aide à gérer les habitudes et notes. Tu peux créer, modifier ou supprimer des habitudes, et ajouter des notes.'
-            },
-            {
-              role: 'user',
-              content: text
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
-      });
+    // Récupérer les habitudes actuelles de l'utilisateur
+    const { data: userHabits } = await supabase
+      .from('habits')
+      .select('*')
+      .eq('user_id', user.id);
 
-      if (!conversationResponse.ok) {
-        throw new Error('OpenAI chat API error');
-      }
+    // Récupérer les notes actuelles de l'utilisateur
+    const { data: userNotes } = await supabase
+      .from('daily_notes')
+      .select('*')
+      .eq('user_id', user.id);
 
-      const conversationData = await conversationResponse.json();
-      return new Response(
-        JSON.stringify({
-          type: 'assistant_message',
-          content: conversationData.choices[0].message.content
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const conversationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Tu es un assistant qui aide à gérer les habitudes et les notes. Tu as accès aux données suivantes de l'utilisateur:
+
+Habitudes actuelles:
+${JSON.stringify(userHabits, null, 2)}
+
+Notes actuelles:
+${JSON.stringify(userNotes, null, 2)}
+
+Tu peux effectuer les actions suivantes:
+1. Créer une nouvelle habitude
+2. Modifier une habitude existante
+3. Supprimer une habitude
+4. Créer ou modifier une note
+
+Pour chaque action, réponds avec un objet JSON contenant:
+- action: "create_habit", "update_habit", "delete_habit", ou "update_note"
+- data: les données nécessaires pour l'action
+- message: un message à afficher à l'utilisateur
+
+Par exemple:
+{
+  "action": "create_habit",
+  "data": {
+    "title": "Méditer",
+    "description": "10 minutes par jour",
+    "habit_type": "good",
+    "experience_points": 50
+  },
+  "message": "J'ai créé une nouvelle habitude de méditation"
+}
+`
+          },
+          {
+            role: 'user',
+            content: userMessage
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+      }),
+    });
+
+    if (!conversationResponse.ok) {
+      throw new Error('OpenAI chat API error');
+    }
+
+    const conversationData = await conversationResponse.json();
+    const assistantResponse = JSON.parse(conversationData.choices[0].message.content);
+    console.log("Assistant response:", assistantResponse);
+
+    // Exécuter l'action demandée
+    switch (assistantResponse.action) {
+      case 'create_habit':
+        await supabase.from('habits').insert([{
+          ...assistantResponse.data,
+          user_id: user.id
+        }]);
+        break;
+
+      case 'update_habit':
+        await supabase.from('habits')
+          .update(assistantResponse.data)
+          .eq('title', assistantResponse.data.title)
+          .eq('user_id', user.id);
+        break;
+
+      case 'delete_habit':
+        await supabase.from('habits')
+          .delete()
+          .eq('title', assistantResponse.data.title)
+          .eq('user_id', user.id);
+        break;
+
+      case 'update_note':
+        const today = new Date().toISOString().split('T')[0];
+        const { data: existingNote } = await supabase
+          .from('daily_notes')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('date', today)
+          .single();
+
+        if (existingNote) {
+          await supabase.from('daily_notes')
+            .update({ content: assistantResponse.data.content })
+            .eq('id', existingNote.id);
+        } else {
+          await supabase.from('daily_notes').insert([{
+            content: assistantResponse.data.content,
+            user_id: user.id,
+            date: today
+          }]);
+        }
+        break;
     }
 
     return new Response(
-      JSON.stringify({ error: 'Invalid request type' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      JSON.stringify({
+        type: 'assistant_message',
+        content: assistantResponse.message
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
