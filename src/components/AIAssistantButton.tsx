@@ -11,13 +11,22 @@ export function AIAssistantButton() {
   const { executeActions } = useAssistantActions();
   
   const handleAssistantResponse = async (data: any) => {
-    if (data.actions && Array.isArray(data.actions)) {
-      await executeActions(data.actions);
-    }
+    try {
+      if (data.actions && Array.isArray(data.actions)) {
+        await executeActions(data.actions);
+      }
 
-    if (data.message) {
+      if (data.message) {
+        toast({
+          description: data.message
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors du traitement de la réponse:', error);
       toast({
-        description: data.message
+        title: "Erreur",
+        description: "Une erreur est survenue lors du traitement de la réponse",
+        variant: "destructive"
       });
     }
   };
@@ -29,11 +38,20 @@ export function AIAssistantButton() {
     stopRecording
   } = useVoiceRecording(handleAssistantResponse);
 
-  const toggleRecording = () => {
-    if (isListening) {
-      stopRecording();
-    } else {
-      startRecording();
+  const handleClick = async () => {
+    try {
+      if (isListening) {
+        await stopRecording();
+      } else {
+        await startRecording();
+      }
+    } catch (error) {
+      console.error('Erreur lors de la gestion du microphone:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue avec le microphone",
+        variant: "destructive"
+      });
     }
   };
 
@@ -42,7 +60,7 @@ export function AIAssistantButton() {
       isGenerating ? 'animate-pulse' : ''
     }`}>
       <Button
-        onClick={toggleRecording}
+        onClick={handleClick}
         variant="ghost"
         className={`w-full h-full px-6 py-8 relative group ${
           isListening ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'hover:bg-gray-100'
