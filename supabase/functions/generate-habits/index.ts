@@ -2,7 +2,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,15 +30,7 @@ serve(async (req) => {
   }
 
   try {
-    // Vérification de la clé API
-    console.log('DeepSeek API Key présente:', !!deepseekApiKey);
-    if (!deepseekApiKey) {
-      throw new Error('DeepSeek API key is not configured');
-    }
-
     const { prompt, currentHabits } = await req.json();
-    console.log('Received prompt:', prompt);
-    console.log('Current habits:', JSON.stringify(currentHabits));
     
     const messages = [
       {
@@ -71,52 +63,32 @@ serve(async (req) => {
       }
     ];
 
-    console.log('Sending request to DeepSeek API...');
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${deepseekApiKey}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: 'gpt-4o-mini',
         messages,
         temperature: 0.7,
-        max_tokens: 2000,
-        top_p: 0.95,
-        frequency_penalty: 0,
-        presence_penalty: 0,
       }),
     });
 
-    // Log de la réponse brute pour le débogage
-    const responseText = await response.text();
-    console.log('Raw API Response:', responseText);
-
     if (!response.ok) {
-      console.error('DeepSeek API Response Status:', response.status);
-      console.error('DeepSeek API Response Headers:', Object.fromEntries(response.headers.entries()));
-      throw new Error(`DeepSeek API error: ${responseText}`);
+      throw new Error('OpenAI API error');
     }
 
-    // Parse la réponse JSON maintenant que nous savons qu'elle est valide
-    const data = JSON.parse(responseText);
-    console.log('Parsed API Response:', data);
-
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response format from DeepSeek API');
-    }
-
+    const data = await response.json();
     const cleanedResponse = cleanAIResponse(data.choices[0].message.content);
-    console.log('Cleaned response:', cleanedResponse);
     
     try {
       const actions = JSON.parse(cleanedResponse);
-      console.log('Parsed actions:', actions);
 
       // Valider la structure de la réponse
       if (!actions.toCreate || !Array.isArray(actions.toCreate) || !actions.toDelete || !Array.isArray(actions.toDelete)) {
-        throw new Error('Invalid response format: missing required arrays');
+        throw new Error('Invalid response format');
       }
 
       return new Response(JSON.stringify(actions), {
@@ -126,15 +98,11 @@ serve(async (req) => {
       console.error('Parse error:', parseError);
       console.error('Raw response:', data.choices[0].message.content);
       console.error('Cleaned response:', cleanedResponse);
-      throw new Error(`Failed to parse AI response: ${parseError.message}`);
+      throw new Error('Failed to parse AI response');
     }
   } catch (error) {
     console.error('Error in generate-habits function:', error);
-    // Retourner une réponse d'erreur détaillée
-    return new Response(JSON.stringify({ 
-      error: error.message,
-      details: error.stack
-    }), {
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
