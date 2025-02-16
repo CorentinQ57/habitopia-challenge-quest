@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.8';
@@ -338,22 +339,23 @@ IMPORTANT :
             break;
           }
         }
+
+        const responseData = {
+          type: 'assistant_message',
+          content: assistantResponse.message
+        };
+
+        console.log("Sending response:", JSON.stringify(responseData, null, 2));
+
+        return new Response(
+          JSON.stringify(responseData),
+          { headers: corsHeaders }
+        );
+
       } catch (dbError) {
         console.error("Database operation error:", dbError);
         throw new Error(`Database operation failed: ${dbError.message}`);
       }
-
-      const responseData = {
-        type: 'assistant_message',
-        content: assistantResponse.message
-      };
-
-      console.log("Sending response:", JSON.stringify(responseData, null, 2));
-
-      return new Response(
-        JSON.stringify(responseData),
-        { headers: corsHeaders }
-      );
 
     } catch (aiError) {
       console.error("AI processing error:", aiError);
