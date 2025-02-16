@@ -142,12 +142,14 @@ Tu peux effectuer les actions suivantes:
 3. Supprimer une habitude
 4. Créer ou modifier une note
 
-Pour chaque action, réponds avec un objet JSON contenant:
+Pour chaque action, réponds UNIQUEMENT avec un objet JSON valide contenant:
 - action: "create_habit", "update_habit", "delete_habit", ou "update_note"
 - data: les données nécessaires pour l'action
 - message: un message à afficher à l'utilisateur
 
-Par exemple:
+Exemples de réponses valides:
+
+Pour créer une habitude:
 {
   "action": "create_habit",
   "data": {
@@ -157,7 +159,39 @@ Par exemple:
     "experience_points": 50
   },
   "message": "J'ai créé une nouvelle habitude de méditation"
-}`
+}
+
+Pour supprimer une habitude:
+{
+  "action": "delete_habit",
+  "data": {
+    "title": "Méditer"
+  },
+  "message": "J'ai supprimé l'habitude de méditation"
+}
+
+Pour mettre à jour une habitude:
+{
+  "action": "update_habit",
+  "data": {
+    "title": "Méditer",
+    "description": "20 minutes par jour",
+    "habit_type": "good",
+    "experience_points": 100
+  },
+  "message": "J'ai mis à jour l'habitude de méditation"
+}
+
+Pour supprimer toutes les habitudes:
+{
+  "action": "delete_habit",
+  "data": {
+    "title": "ALL"
+  },
+  "message": "J'ai supprimé toutes les habitudes"
+}
+
+IMPORTANT : Réponds UNIQUEMENT avec un objet JSON valide, pas de texte avant ou après.`
           },
           {
             role: 'user',
@@ -220,11 +254,22 @@ Par exemple:
         }
 
         case 'delete_habit': {
-          const { error } = await supabase.from('habits')
-            .delete()
-            .eq('title', assistantResponse.data.title)
-            .eq('user_id', user.id);
-          if (error) throw new Error(`Failed to delete habit: ${error.message}`);
+          let error;
+          if (assistantResponse.data.title === 'ALL') {
+            // Supprimer toutes les habitudes
+            const { error: deleteError } = await supabase.from('habits')
+              .delete()
+              .eq('user_id', user.id);
+            error = deleteError;
+          } else {
+            // Supprimer une habitude spécifique
+            const { error: deleteError } = await supabase.from('habits')
+              .delete()
+              .eq('title', assistantResponse.data.title)
+              .eq('user_id', user.id);
+            error = deleteError;
+          }
+          if (error) throw new Error(`Failed to delete habit(s): ${error.message}`);
           break;
         }
 
@@ -235,9 +280,9 @@ Par exemple:
             .select('*')
             .eq('user_id', user.id)
             .eq('date', today)
-            .single();
+            .maybeSingle();
 
-          if (fetchError && fetchError.code !== 'PGRST116') {
+          if (fetchError) {
             throw new Error(`Failed to fetch note: ${fetchError.message}`);
           }
 
