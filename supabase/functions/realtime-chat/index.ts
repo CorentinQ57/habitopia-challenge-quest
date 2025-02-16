@@ -2,7 +2,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 serve(async (req) => {
   const { headers } = req;
@@ -32,26 +32,27 @@ serve(async (req) => {
           // Extraire le contenu base64 en supprimant le préfixe data:audio/wav;base64,
           const base64Data = message.data.split(',')[1];
           
-          // Convertir en texte en utilisant l'API DeepSeek Speech-to-Text
-          const transcriptionResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+          // Convertir en texte en utilisant l'API Whisper d'OpenAI
+          const transcriptionResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${deepseekApiKey}`,
-              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${openAIApiKey}`,
             },
-            body: JSON.stringify({
-              model: 'deepseek-chat',
-              messages: [
-                {
-                  role: 'system',
-                  content: 'Transcris cet audio en texte.'
-                },
-                {
-                  role: 'user',
-                  content: base64Data
-                }
-              ],
-            }),
+            body: (() => {
+              const formData = new FormData();
+              // Convertir le base64 en blob
+              const byteCharacters = atob(base64Data);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'audio/wav' });
+              formData.append('file', blob, 'audio.wav');
+              formData.append('model', 'whisper-1');
+              formData.append('language', 'fr');
+              return formData;
+            })(),
           });
 
           if (!transcriptionResponse.ok) {
@@ -59,18 +60,18 @@ serve(async (req) => {
           }
 
           const transcriptionData = await transcriptionResponse.json();
-          const text = transcriptionData.choices[0].message.content;
+          const text = transcriptionData.text;
           console.log("Transcribed text:", text);
 
-          // Une fois le texte obtenu, on l'envoie au modèle de conversation
-          const conversationResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+          // Une fois le texte obtenu, on l'envoie au modèle GPT
+          const conversationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${deepseekApiKey}`,
+              'Authorization': `Bearer ${openAIApiKey}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'deepseek-chat',
+              model: 'gpt-4o-mini',
               messages: [
                 {
                   role: 'system',
@@ -87,7 +88,7 @@ serve(async (req) => {
           });
 
           if (!conversationResponse.ok) {
-            throw new Error('DeepSeek chat API error');
+            throw new Error('OpenAI chat API error');
           }
 
           const conversationData = await conversationResponse.json();
@@ -96,15 +97,15 @@ serve(async (req) => {
             content: conversationData.choices[0].message.content
           }));
         } else if (message.type === 'text') {
-          // Si c'est du texte, on l'envoie directement au modèle de conversation
-          const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+          // Si c'est du texte, on l'envoie directement au modèle GPT
+          const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${deepseekApiKey}`,
+              'Authorization': `Bearer ${openAIApiKey}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'deepseek-chat',
+              model: 'gpt-4o-mini',
               messages: [
                 {
                   role: 'system',
@@ -121,7 +122,7 @@ serve(async (req) => {
           });
 
           if (!response.ok) {
-            throw new Error('DeepSeek chat API error');
+            throw new Error('OpenAI chat API error');
           }
 
           const data = await response.json();
