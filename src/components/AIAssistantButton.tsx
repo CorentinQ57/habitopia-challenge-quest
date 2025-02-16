@@ -4,11 +4,24 @@ import { Bot } from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from '@tanstack/react-query';
 
 export function AIAssistantButton() {
   const { toast } = useToast();
   const [isListening, setIsListening] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const queryClient = useQueryClient();
+
+  const handleSuccessfulAction = () => {
+    // Actualiser toutes les requêtes pertinentes
+    queryClient.invalidateQueries({ queryKey: ["habits"] });
+    queryClient.invalidateQueries({ queryKey: ["dailyNotes"] });
+    queryClient.invalidateQueries({ queryKey: ["habitLogs"] });
+    queryClient.invalidateQueries({ queryKey: ["userStreak"] });
+    queryClient.invalidateQueries({ queryKey: ["weeklyStats"] });
+    queryClient.invalidateQueries({ queryKey: ["categoryStats"] });
+    queryClient.invalidateQueries({ queryKey: ["hourlyStats"] });
+  };
 
   const startRecording = async () => {
     try {
@@ -52,6 +65,9 @@ export function AIAssistantButton() {
               toast({
                 description: data.content
               });
+              
+              // Actualiser les données après une action réussie
+              handleSuccessfulAction();
             }
           } catch (error) {
             console.error("Erreur lors du traitement de la réponse:", error);
