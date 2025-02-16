@@ -146,7 +146,7 @@ export function AIAssistantButton() {
           </div>
           <div className="flex flex-col items-start">
             <span className="font-medium">
-              {isGenerating ? 'Je réfléchis...' : isListening ? 'Je vous écoute...' : 'Comment puis-je vous aider ?'}
+              {isGenerating ? 'Je réfléchis...' : isListening ? 'Je vous écoute...' : 'Comment je peux aider ?'}
             </span>
             <span className="text-sm text-gray-500">
               {isGenerating ? 'Merci de patienter' : isListening ? 'Cliquez pour arrêter' : 'Cliquez pour parler'}
