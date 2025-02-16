@@ -4,6 +4,7 @@ import { Bot } from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 
+// L'URL doit être complète et inclure le projet Supabase
 const WS_URL = 'wss://haodastqykbgflafrlfn.functions.supabase.co/realtime-chat';
 
 export function AIAssistantButton() {
@@ -37,10 +38,18 @@ export function AIAssistantButton() {
         
         reader.onloadend = () => {
           if (wsRef.current?.readyState === WebSocket.OPEN) {
+            console.log("Envoi de la requête WebSocket à Supabase:", {
+              url: WS_URL,
+              messageType: 'audio',
+              dataLength: reader.result?.toString().length
+            });
+
             wsRef.current.send(JSON.stringify({
               type: 'audio',
               data: reader.result
             }));
+          } else {
+            console.error("WebSocket n'est pas ouvert. État actuel:", wsRef.current?.readyState);
           }
         };
         
@@ -50,9 +59,12 @@ export function AIAssistantButton() {
       mediaRecorderRef.current.start();
       setIsListening(true);
       
+      // Création de la connexion WebSocket
+      console.log("Tentative de connexion WebSocket à:", WS_URL);
       wsRef.current = new WebSocket(WS_URL);
       
       wsRef.current.onopen = () => {
+        console.log("WebSocket connecté avec succès");
         setIsConnected(true);
         toast({
           title: "Assistant connecté",
@@ -61,12 +73,14 @@ export function AIAssistantButton() {
       };
       
       wsRef.current.onmessage = (event) => {
+        console.log("Message reçu du serveur:", event.data);
         const data = JSON.parse(event.data);
         if (data.type === 'assistant_message') {
           toast({
             description: data.content
           });
         } else if (data.type === 'error') {
+          console.error("Erreur reçue du serveur:", data.content);
           toast({
             title: "Erreur",
             description: data.content,
@@ -76,7 +90,11 @@ export function AIAssistantButton() {
       };
       
       wsRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error('Erreur WebSocket:', {
+          error,
+          wsState: wsRef.current?.readyState,
+          url: WS_URL
+        });
         toast({
           title: "Erreur de connexion",
           description: "Impossible de se connecter à l'assistant",
@@ -85,7 +103,7 @@ export function AIAssistantButton() {
       };
 
     } catch (error) {
-      console.error('Error accessing microphone:', error);
+      console.error('Erreur d\'accès au microphone:', error);
       toast({
         title: "Erreur",
         description: "Impossible d'accéder au microphone",
