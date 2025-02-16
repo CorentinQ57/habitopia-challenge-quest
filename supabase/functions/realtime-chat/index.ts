@@ -20,8 +20,23 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    console.log("Requête reçue:", body);
+    let requestBody;
+    try {
+      const text = await req.text();
+      console.log("Raw request body:", text);
+      requestBody = JSON.parse(text);
+    } catch (parseError) {
+      console.error("Error parsing request body:", parseError);
+      return new Response(
+        JSON.stringify({ error: `Invalid JSON: ${parseError.message}` }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
+
+    console.log("Parsed request body:", requestBody);
 
     // Extraire le user_id du token d'autorisation
     const authHeader = req.headers.get('authorization');
@@ -38,63 +53,87 @@ serve(async (req) => {
 
     let userMessage = '';
 
-    if (body.type === 'audio') {
-      const base64Data = body.data.split(',')[1];
-      
-      const transcriptionResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-        },
-        body: (() => {
-          const formData = new FormData();
-          const byteCharacters = atob(base64Data);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: 'audio/wav' });
-          formData.append('file', blob, 'audio.wav');
-          formData.append('model', 'whisper-1');
-          formData.append('language', 'fr');
-          return formData;
-        })(),
-      });
-
-      if (!transcriptionResponse.ok) {
-        throw new Error('Failed to transcribe audio');
+    if (requestBody.type === 'audio') {
+      if (!requestBody.data || typeof requestBody.data !== 'string') {
+        throw new Error('Invalid audio data format');
       }
 
-      const transcriptionData = await transcriptionResponse.json();
-      userMessage = transcriptionData.text;
-      console.log("Transcribed text:", userMessage);
+      const dataUrlParts = requestBody.data.split(',');
+      if (dataUrlParts.length !== 2) {
+        throw new Error('Invalid data URL format');
+      }
+
+      const base64Data = dataUrlParts[1];
+      
+      try {
+        const transcriptionResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+          },
+          body: (() => {
+            const formData = new FormData();
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'audio/wav' });
+            formData.append('file', blob, 'audio.wav');
+            formData.append('model', 'whisper-1');
+            formData.append('language', 'fr');
+            return formData;
+          })(),
+        });
+
+        if (!transcriptionResponse.ok) {
+          const errorText = await transcriptionResponse.text();
+          throw new Error(`Failed to transcribe audio: ${errorText}`);
+        }
+
+        const transcriptionData = await transcriptionResponse.json();
+        userMessage = transcriptionData.text;
+        console.log("Transcribed text:", userMessage);
+      } catch (transcriptionError) {
+        console.error("Transcription error:", transcriptionError);
+        throw new Error(`Transcription failed: ${transcriptionError.message}`);
+      }
     }
 
     // Récupérer les habitudes actuelles de l'utilisateur
-    const { data: userHabits } = await supabase
+    const { data: userHabits, error: habitsError } = await supabase
       .from('habits')
       .select('*')
       .eq('user_id', user.id);
 
+    if (habitsError) {
+      throw new Error(`Failed to fetch habits: ${habitsError.message}`);
+    }
+
     // Récupérer les notes actuelles de l'utilisateur
-    const { data: userNotes } = await supabase
+    const { data: userNotes, error: notesError } = await supabase
       .from('daily_notes')
       .select('*')
       .eq('user_id', user.id);
 
-    const conversationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `Tu es un assistant qui aide à gérer les habitudes et les notes. Tu as accès aux données suivantes de l'utilisateur:
+    if (notesError) {
+      throw new Error(`Failed to fetch notes: ${notesError.message}`);
+    }
+
+    try {
+      const conversationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'system',
+              content: `Tu es un assistant qui aide à gérer les habitudes et les notes. Tu as accès aux données suivantes de l'utilisateur:
 
 Habitudes actuelles:
 ${JSON.stringify(userHabits, null, 2)}
@@ -123,80 +162,106 @@ Par exemple:
     "experience_points": 50
   },
   "message": "J'ai créé une nouvelle habitude de méditation"
-}
-`
-          },
-          {
-            role: 'user',
-            content: userMessage
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
-    });
+}`
+            },
+            {
+              role: 'user',
+              content: userMessage
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000,
+        }),
+      });
 
-    if (!conversationResponse.ok) {
-      throw new Error('OpenAI chat API error');
-    }
+      if (!conversationResponse.ok) {
+        const errorText = await conversationResponse.text();
+        throw new Error(`OpenAI API error: ${errorText}`);
+      }
 
-    const conversationData = await conversationResponse.json();
-    const assistantResponse = JSON.parse(conversationData.choices[0].message.content);
-    console.log("Assistant response:", assistantResponse);
+      const conversationData = await conversationResponse.json();
+      let assistantResponse;
+      try {
+        assistantResponse = JSON.parse(conversationData.choices[0].message.content);
+      } catch (parseError) {
+        console.error("Error parsing assistant response:", parseError);
+        console.log("Raw assistant response:", conversationData.choices[0].message.content);
+        throw new Error('Invalid response format from assistant');
+      }
 
-    // Exécuter l'action demandée
-    switch (assistantResponse.action) {
-      case 'create_habit':
-        await supabase.from('habits').insert([{
-          ...assistantResponse.data,
-          user_id: user.id
-        }]);
-        break;
+      console.log("Assistant response:", assistantResponse);
 
-      case 'update_habit':
-        await supabase.from('habits')
-          .update(assistantResponse.data)
-          .eq('title', assistantResponse.data.title)
-          .eq('user_id', user.id);
-        break;
-
-      case 'delete_habit':
-        await supabase.from('habits')
-          .delete()
-          .eq('title', assistantResponse.data.title)
-          .eq('user_id', user.id);
-        break;
-
-      case 'update_note':
-        const today = new Date().toISOString().split('T')[0];
-        const { data: existingNote } = await supabase
-          .from('daily_notes')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('date', today)
-          .single();
-
-        if (existingNote) {
-          await supabase.from('daily_notes')
-            .update({ content: assistantResponse.data.content })
-            .eq('id', existingNote.id);
-        } else {
-          await supabase.from('daily_notes').insert([{
-            content: assistantResponse.data.content,
-            user_id: user.id,
-            date: today
+      // Exécuter l'action demandée
+      switch (assistantResponse.action) {
+        case 'create_habit': {
+          const { error } = await supabase.from('habits').insert([{
+            ...assistantResponse.data,
+            user_id: user.id
           }]);
+          if (error) throw new Error(`Failed to create habit: ${error.message}`);
+          break;
         }
-        break;
-    }
 
-    return new Response(
-      JSON.stringify({
-        type: 'assistant_message',
-        content: assistantResponse.message
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+        case 'update_habit': {
+          const { error } = await supabase.from('habits')
+            .update(assistantResponse.data)
+            .eq('title', assistantResponse.data.title)
+            .eq('user_id', user.id);
+          if (error) throw new Error(`Failed to update habit: ${error.message}`);
+          break;
+        }
+
+        case 'delete_habit': {
+          const { error } = await supabase.from('habits')
+            .delete()
+            .eq('title', assistantResponse.data.title)
+            .eq('user_id', user.id);
+          if (error) throw new Error(`Failed to delete habit: ${error.message}`);
+          break;
+        }
+
+        case 'update_note': {
+          const today = new Date().toISOString().split('T')[0];
+          const { data: existingNote, error: fetchError } = await supabase
+            .from('daily_notes')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('date', today)
+            .single();
+
+          if (fetchError && fetchError.code !== 'PGRST116') {
+            throw new Error(`Failed to fetch note: ${fetchError.message}`);
+          }
+
+          if (existingNote) {
+            const { error } = await supabase.from('daily_notes')
+              .update({ content: assistantResponse.data.content })
+              .eq('id', existingNote.id);
+            if (error) throw new Error(`Failed to update note: ${error.message}`);
+          } else {
+            const { error } = await supabase.from('daily_notes').insert([{
+              content: assistantResponse.data.content,
+              user_id: user.id,
+              date: today
+            }]);
+            if (error) throw new Error(`Failed to create note: ${error.message}`);
+          }
+          break;
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          type: 'assistant_message',
+          content: assistantResponse.message
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } catch (aiError) {
+      console.error("AI processing error:", aiError);
+      throw new Error(`AI processing failed: ${aiError.message}`);
+    }
 
   } catch (error) {
     console.error('Error processing request:', error);
