@@ -24,6 +24,69 @@ export function AIAssistantButton() {
     queryClient.invalidateQueries({ queryKey: ["hourlyStats"] });
   };
 
+  const executeActions = async (actions: any[]) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    for (const action of actions) {
+      try {
+        switch (action.action) {
+          case 'create_habit':
+            await supabase.from('habits').insert({
+              ...action.data,
+              user_id: user.id
+            });
+            break;
+
+          case 'delete_habit':
+            if (action.data.title === 'ALL') {
+              await supabase.from('habits')
+                .delete()
+                .eq('user_id', user.id);
+            } else {
+              await supabase.from('habits')
+                .delete()
+                .eq('title', action.data.title)
+                .eq('user_id', user.id);
+            }
+            break;
+
+          case 'update_note': {
+            const date = new Date().toISOString().split('T')[0];
+            const { data: existingNote } = await supabase
+              .from('daily_notes')
+              .select('*')
+              .eq('user_id', user.id)
+              .eq('date', date)
+              .maybeSingle();
+
+            if (existingNote) {
+              await supabase.from('daily_notes')
+                .update({ content: action.data.content })
+                .eq('id', existingNote.id);
+            } else {
+              await supabase.from('daily_notes').insert({
+                content: action.data.content,
+                user_id: user.id,
+                date: date
+              });
+            }
+            break;
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors de l\'exécution de l\'action:', error);
+        toast({
+          title: "Erreur",
+          description: `Impossible d'exécuter l'action: ${error.message}`,
+          variant: "destructive"
+        });
+      }
+    }
+
+    handleSuccessfulAction();
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -51,8 +114,6 @@ export function AIAssistantButton() {
               }
             });
 
-            setIsGenerating(false);
-
             if (error) {
               console.error("Erreur lors de l'appel à la fonction:", error);
               toast({
@@ -60,18 +121,26 @@ export function AIAssistantButton() {
                 description: error.message,
                 variant: "destructive"
               });
+              setIsGenerating(false);
               return;
             }
 
             console.log("Réponse reçue:", data);
             
-            if (data.type === 'assistant_message') {
-              toast({
-                description: data.content
-              });
-              
-              handleSuccessfulAction();
+            // Vérifie si la réponse contient des actions à exécuter
+            if (data.actions && Array.isArray(data.actions)) {
+              await executeActions(data.actions);
             }
+
+            // Affiche toujours le message de réponse
+            if (data.message) {
+              toast({
+                description: data.message
+              });
+            }
+
+            setIsGenerating(false);
+            
           } catch (error) {
             console.error("Erreur lors du traitement de la réponse:", error);
             toast({
