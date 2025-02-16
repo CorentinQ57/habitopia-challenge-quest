@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.8';
@@ -176,21 +177,17 @@ Pour créer plusieurs habitudes:
   "message": "J'ai créé 2 nouvelles habitudes pour vous"
 }
 
-Pour créer une seule habitude:
+Pour créer une note:
 {
   "actions": [
     {
-      "action": "create_habit",
+      "action": "update_note",
       "data": {
-        "title": "Méditer",
-        "description": "10 minutes par jour",
-        "habit_type": "good",
-        "experience_points": 50,
-        "icon": "🧘‍♂️"
+        "content": "Aujourd'hui j'ai fait du sport et mangé équilibré"
       }
     }
   ],
-  "message": "J'ai créé une nouvelle habitude de méditation"
+  "message": "J'ai ajouté votre note pour aujourd'hui"
 }
 
 Pour supprimer une habitude:
@@ -211,7 +208,8 @@ IMPORTANT :
 - Pour create_habit, TOUS les champs sont obligatoires (title, description, habit_type, experience_points, icon)
 - habit_type doit être "good" ou "bad"
 - experience_points doit être un nombre positif
-- Ajoute toujours une icône appropriée dans le champ icon`
+- Ajoute toujours une icône appropriée dans le champ icon
+- Pour les notes, le champ content est obligatoire`
           },
           {
             role: 'user',
@@ -268,6 +266,10 @@ IMPORTANT :
 
           if (typeof action.data.experience_points !== 'number' || action.data.experience_points <= 0) {
             throw new Error('experience_points must be a positive number');
+          }
+        } else if (action.action === 'update_note') {
+          if (!action.data.content) {
+            throw new Error('Content is required for notes');
           }
         }
       }
