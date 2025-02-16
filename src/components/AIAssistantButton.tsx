@@ -5,12 +5,13 @@ import { Card } from './ui/card';
 import { AssistantIcon } from './ui/assistant-icon';
 import { useVoiceRecording } from '@/hooks/use-voice-recording';
 import { useAssistantActions } from '@/hooks/use-assistant-actions';
+import { useCallback } from 'react';
 
 export function AIAssistantButton() {
   const { toast } = useToast();
   const { executeActions } = useAssistantActions();
   
-  const handleAssistantResponse = async (data: any) => {
+  const handleAssistantResponse = useCallback(async (data: any) => {
     try {
       if (data.actions && Array.isArray(data.actions)) {
         await executeActions(data.actions);
@@ -29,7 +30,7 @@ export function AIAssistantButton() {
         variant: "destructive"
       });
     }
-  };
+  }, [executeActions, toast]);
 
   const {
     isListening,
@@ -38,7 +39,7 @@ export function AIAssistantButton() {
     stopRecording
   } = useVoiceRecording(handleAssistantResponse);
 
-  const handleClick = async () => {
+  const handleClick = useCallback(async () => {
     try {
       if (isListening) {
         await stopRecording();
@@ -53,7 +54,7 @@ export function AIAssistantButton() {
         variant: "destructive"
       });
     }
-  };
+  }, [isListening, startRecording, stopRecording, toast]);
 
   return (
     <Card className={`mb-4 overflow-hidden transition-all duration-300 ${
