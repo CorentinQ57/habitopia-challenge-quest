@@ -89,6 +89,9 @@ export const useVoiceRecording = (onResponse: (data: any) => Promise<void>) => {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       setIsListening(false);
+      toast({
+        description: "🎤 Enregistrement terminé, traitement en cours..."
+      });
     }
   };
 

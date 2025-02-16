@@ -75,25 +75,32 @@ export const useAssistantActions = () => {
               .maybeSingle();
 
             if (existingNote) {
-              await supabase.from('daily_notes')
+              const { error: updateError } = await supabase.from('daily_notes')
                 .update({ content: action.data.content })
                 .eq('id', existingNote.id);
+                
+              if (updateError) throw updateError;
             } else {
-              await supabase.from('daily_notes').insert({
+              const { error: insertError } = await supabase.from('daily_notes').insert({
                 content: action.data.content,
                 user_id: user.id,
                 date: date
               });
+              
+              if (insertError) throw insertError;
             }
             actionSuccessful = true;
             toast({
-              description: `📝 Note mise à jour pour le ${new Date(date).toLocaleDateString('fr-FR')}`
+              description: `📝 Note ${existingNote ? 'mise à jour' : 'créée'} pour le ${new Date(date).toLocaleDateString('fr-FR')}`
             });
+            // Invalidate queries immediateluy after note operation
+            handleSuccessfulAction();
             break;
           }
         }
 
-        if (actionSuccessful) {
+        // For non-note actions, update at the end of each action
+        if (actionSuccessful && action.action !== 'update_note') {
           handleSuccessfulAction();
         }
 
